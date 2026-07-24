@@ -100,6 +100,25 @@ function buildTrendConfig(
   };
 }
 
+const getTileMinHeight = (spacing: MetricVisComponentProps['config']['metric']['density']) => {
+  // panel height is = rowHeight * h + (h - 1) * gutter size, where gutter=8px and rowHeight=20px, and
+  // h is the number of grid points.
+
+  // for small spacing, minHeight from elastic charts is 71px, so we need at least 3 grid points to fit,
+  // h = 3, 3*20 + 2*8 = 76px.
+  if (spacing === 'small') {
+    return 76;
+  }
+
+  // for large spacing, minHeight from elastic charts is 79px, so we need at least 4 grid points to fit,
+  // h = 4, 4*20 + 3*8 = 104px.
+  if (spacing === 'large') {
+    return 104;
+  }
+
+  return chartBaseTheme.metric.minHeight;
+};
+
 const DEFAULT_SINGLE_TILE_WIDTH = 300;
 const DEFAULT_SINGLE_TILE_HEIGHT = 160;
 const DEFAULT_MULTI_TILE_SIDE_LENGTH = 200;
@@ -320,7 +339,8 @@ export const MetricVis = ({
   } = config;
   const numRows = metricConfigs.length / maxCols;
 
-  const minHeight = chartBaseTheme.metric.minHeight;
+  const spacing = getMetricSpacing(config.metric.density);
+  const minHeight = getTileMinHeight(spacing);
 
   // this needs to use a useEffect as it depends on the scrollContainerRef
   // which is not available on the first render
