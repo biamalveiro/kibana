@@ -11,6 +11,7 @@ import { i18n } from '@kbn/i18n';
 import { euiPaletteColorBlind } from '@elastic/eui';
 import { KbnPalette } from '../../constants';
 import { KbnColorFnPalette } from '../../classes/color_fn_palette';
+import { paletteSize } from './elastic';
 
 /**
  * Index pairs to swap within each group of 10 palette colors.
@@ -27,8 +28,8 @@ const COLOR_SWAP_PAIRS: Array<[number, number]> = [
  */
 export function swapColorPairs(colors: string[]): string[] {
   const result = [...colors];
-  for (let groupStart = 0; groupStart < result.length; groupStart += 10) {
-    if (groupStart + 9 < result.length) {
+  for (let groupStart = 0; groupStart < result.length; groupStart += paletteSize) {
+    if (groupStart + paletteSize <= result.length) {
       for (const [a, b] of COLOR_SWAP_PAIRS) {
         [result[groupStart + a], result[groupStart + b]] = [
           result[groupStart + b],
@@ -46,8 +47,8 @@ export function swapColorPairs(colors: string[]): string[] {
  */
 export function reorderDarkFirst(colors: string[]): string[] {
   const result: string[] = [];
-  for (let i = 0; i < colors.length; i += 10) {
-    const group = colors.slice(i, i + 10);
+  for (let i = 0; i < colors.length; i += paletteSize) {
+    const group = colors.slice(i, i + paletteSize);
     const dark = group.filter((_, idx) => idx % 2 === 0);
     const light = group.filter((_, idx) => idx % 2 !== 0);
     result.push(...dark, ...light);
@@ -59,7 +60,7 @@ export const elasticLineOptimizedPalette = new KbnColorFnPalette({
   id: KbnPalette.ElasticLineOptimized,
   type: 'categorical',
   aliases: [],
-  colorCount: 10,
+  colorCount: paletteSize,
   defaultNumberOfColors: 30,
   name: i18n.translate('palettes.elasticLineOptimized.name', {
     defaultMessage: 'Elastic (line optimized)',

@@ -12,6 +12,8 @@ import { euiPaletteColorBlind } from '@elastic/eui';
 import { KbnPalette } from '../../constants';
 import { KbnColorFnPalette } from '../../classes/color_fn_palette';
 
+export const paletteSize = euiPaletteColorBlind().length;
+
 /**
  * This is not correctly returning the updated vis colors from eui.
  * All gradient function work correctly.
@@ -24,7 +26,7 @@ export const elasticPalette = new KbnColorFnPalette({
     'elastic_borealis', // placeholder - not yet used
     KbnPalette.Amsterdam, // to assign to existing default palettes
   ],
-  colorCount: 10,
+  colorCount: paletteSize,
   defaultNumberOfColors: 30,
   name: i18n.translate('palettes.elastic.name', {
     defaultMessage: 'Elastic',
