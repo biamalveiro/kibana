@@ -56,6 +56,7 @@ function buildVisualizationState(config: LensXYConfig): XYVisualizationState {
     valueLabels: config.valueLabels ?? 'hide',
     emphasizeFitting: config?.emphasizeFitting ?? true,
     fittingFunction: config?.fittingFunction ?? 'Linear',
+    ...(config.areaFill ? { areaFill: config.areaFill } : {}),
     yLeftExtent: {
       mode: config.yBounds?.mode ?? 'full',
       lowerBound: config.yBounds?.lowerBound,
