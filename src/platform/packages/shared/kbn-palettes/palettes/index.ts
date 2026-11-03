@@ -9,6 +9,8 @@
 
 import { contrastRolesStore, type ContrastRolesState } from '@kbn/contrast-roles';
 import { KbnPalettes } from '../classes/palettes';
+import type { IKbnPalette } from '../classes/types';
+import { createBrandPalettes, getBrandColors } from './brand';
 import {
   elasticPalette,
   elasticLineOptimizedPalette,
@@ -39,11 +41,15 @@ import {
 } from './gradient';
 export { logLevelPalette } from './semantic';
 
-const buildKbnPalettes = (darkMode: boolean) =>
+const buildKbnPalettes = (
+  darkMode: boolean,
+  defaultPalette: IKbnPalette,
+  lineOptimizedPalette: IKbnPalette
+) =>
   new KbnPalettes(
     [
-      elasticPalette,
-      elasticLineOptimizedPalette,
+      defaultPalette,
+      lineOptimizedPalette,
       revisedPalette,
       getHighContrastPalette(darkMode),
       getLowContrastPalette(darkMode),
@@ -69,20 +75,42 @@ const buildKbnPalettes = (darkMode: boolean) =>
       elasticClassicPalette,
       compareToPalette,
     ],
-    elasticPalette
+    defaultPalette
   );
 
-// A new registry per contrast roles state, so consumers memoized on it recompute when its parameters change; the
-// palettes inside read the state when called.
-let cached: { state: ContrastRolesState; light: KbnPalettes; dark: KbnPalettes } | undefined;
+const buildRegistries = (brandColors: readonly string[] | undefined) => {
+  if (!brandColors) {
+    return {
+      light: buildKbnPalettes(false, elasticPalette, elasticLineOptimizedPalette),
+      dark: buildKbnPalettes(true, elasticPalette, elasticLineOptimizedPalette),
+    };
+  }
+  const { brandPalette, brandLineOptimizedPalette } = createBrandPalettes(brandColors, {
+    defaultPalette: elasticPalette,
+    lineOptimizedPalette: elasticLineOptimizedPalette,
+  });
+  return {
+    light: buildKbnPalettes(false, brandPalette, brandLineOptimizedPalette),
+    dark: buildKbnPalettes(true, brandPalette, brandLineOptimizedPalette),
+  };
+};
+
+// A new registry per contrast roles state and brand colors, so consumers memoized on it recompute when either
+// changes; the contrast roles palettes inside read the state when called.
+let cached:
+  | { state: ContrastRolesState; brandKey: string; light: KbnPalettes; dark: KbnPalettes }
+  | undefined;
 
 export const getPalettes = (darkMode: boolean): KbnPalettes => {
   const state = contrastRolesStore.get();
-  if (cached?.state !== state) {
-    cached = { state, light: buildKbnPalettes(false), dark: buildKbnPalettes(true) };
+  const brandColors = getBrandColors();
+  const brandKey = brandColors?.join(',') ?? '';
+  if (cached?.state !== state || cached.brandKey !== brandKey) {
+    cached = { state, brandKey, ...buildRegistries(brandColors) };
   }
   return darkMode ? cached.dark : cached.light;
 };
 
+export { setBrandColors, getBrandColors } from './brand';
 export { elasticPalette, elasticLineOptimizedPalette } from './categorical';
 export * from './get_kbn_palettes';

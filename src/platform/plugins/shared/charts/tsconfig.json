@@ -18,6 +18,7 @@
     "@kbn/core-lifecycle-browser-mocks",
     "@kbn/palettes",
     "@kbn/contrast-roles",
+    "@kbn/config-schema",
   ],
   "exclude": [
     "target/**/*",
