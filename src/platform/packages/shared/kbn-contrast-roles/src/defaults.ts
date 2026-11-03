@@ -1,0 +1,38 @@
+/*
+ * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
+ * or more contributor license agreements. Licensed under the "Elastic License
+ * 2.0", the "GNU Affero General Public License v3.0 only", and the "Server Side
+ * Public License v 1"; you may not use this file except in compliance with, at
+ * your election, the "Elastic License 2.0", the "GNU Affero General Public
+ * License v3.0 only", or the "Server Side Public License, v 1".
+ */
+
+// Default parameters, with where each value comes from. docs/research.md has the evidence.
+import type { Params } from './types';
+
+export const DEFAULT_PARAMS: Params = {
+  lc: {
+    faint: 15, // fill: metric backgrounds, table cells, badges, area fills. APCA's floor for any visible element
+    muted: 30, // quieter mark: the second segment per hue in stacks. Set by eye, the same in both modes
+    base: 50, // mark: lines, bars, points. About L 0.71 on both white and navy, so one hex works in both modes
+    strong: 70, // second mark tier: lines 7-12
+    ink: 75, // text and icons on a faint fill, measured against faint (APCA's body-text minimum)
+  },
+  base: {
+    from: 'anchor', // 'anchor': base is the hue's given color (a product constraint); 'model': for hues without one
+    // 'model' hue correction: hues whose cusp sits above cuspRef are lifted by cuspPull × (cusp L − cuspRef); the rest
+    // stay at their contrast. Fitted to EUI's /60s (rms dE 0.017; a linear pull on every hue fit 0.020, and darkened blue).
+    cuspPull: 0.28,
+    cuspRef: 0.65,
+  },
+  chroma: {
+    ceiling: 0.165, // most chroma base can carry (EUI's vis colors top out near 0.165)
+    mode: 'cap', // 'cap' (cap from base, tapers) or 'even' (one chroma per role across hues, as Harmonizer does)
+    taper: 0.5, // 'cap': how fast chroma fades for colors lighter than base (against neon teal and yellow pastels)
+    taperDark: 0.25, // 'cap': the same for colors darker than base. Softer: dark yellow with little chroma reads as olive
+  },
+  ramp: {
+    from: 15, // Lc of a ramp's first step, just off the surface
+    to: 50, // Lc of a ramp's last step; Kibana's ramps end at the base color
+  },
+};
