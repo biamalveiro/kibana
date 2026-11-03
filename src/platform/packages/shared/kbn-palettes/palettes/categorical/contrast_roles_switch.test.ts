@@ -29,16 +29,6 @@ describe('contrast roles switch', () => {
     expect(getElasticPalette(false).colors()).toHaveLength(12);
   });
 
-  it("keeps EUI's palettes under their own IDs, whatever the switch", () => {
-    for (const darkMode of [false, true]) {
-      const palettes = getPalettes(darkMode);
-      expect(palettes.get(KbnPalette.ElasticEui).colors(30)).toEqual(elasticPalette.colors(30));
-      expect(palettes.get(KbnPalette.ElasticLineOptimizedEui).colors(30)).toEqual(
-        elasticLineOptimizedPalette.colors(30)
-      );
-    }
-  });
-
   it("uses EUI's colors when off", () => {
     contrastRolesStore.set({ enabled: false });
     expect(getElasticPalette(true).colors(30)).toEqual(elasticPalette.colors(30));
@@ -47,5 +37,20 @@ describe('contrast roles switch', () => {
     );
     expect(getElasticPalette(false).colorCount).toBe(10);
     expect(getElasticPalette(false).colors()).toHaveLength(30);
+  });
+
+  it('builds a new registry only when the state changes', () => {
+    const before = getPalettes(false);
+    const beforeColors = before.get(KbnPalette.Default).colors(12);
+    expect(getPalettes(false)).toBe(before);
+
+    contrastRolesStore.set({
+      params: { ...DEFAULT_STATE.params, lc: { ...DEFAULT_STATE.params.lc, muted: 40 } },
+    });
+    const after = getPalettes(false);
+    const afterColors = after.get(KbnPalette.Default).colors(12);
+    expect(after).not.toBe(before);
+    expect(afterColors).toEqual(themeAware('light').elastic(12));
+    expect(afterColors).not.toEqual(beforeColors);
   });
 });

@@ -46,19 +46,6 @@ export const elasticPalette = new KbnColorFnPalette({
   colorFn: euiColors,
 });
 
-/** EUI's Elastic palette under its own ID, to compare with the contrast roles version. */
-export const elasticEuiPalette = new KbnColorFnPalette({
-  ...commonProps,
-  id: KbnPalette.ElasticEui,
-  aliases: [],
-  tag: undefined,
-  name: i18n.translate('palettes.elasticEui.name', {
-    defaultMessage: 'Elastic (before)',
-  }),
-  colorCount: EUI_COLOR_COUNT,
-  colorFn: euiColors,
-});
-
 const withContrastRoles = (mode: Mode) => {
   const isOn = () => contrastRolesStore.get().enabled;
   return new KbnColorFnPalette({

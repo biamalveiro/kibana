@@ -11,7 +11,16 @@ import type { PaletteRegistry, PaletteDefinition } from '@kbn/coloring';
 import { getActivePaletteName } from '@kbn/coloring';
 import type { CoreTheme } from '@kbn/core/public';
 import type { Observable } from 'rxjs';
-import { distinctUntilChanged, firstValueFrom, from, map, shareReplay, switchMap } from 'rxjs';
+import {
+  combineLatest,
+  distinctUntilChanged,
+  firstValueFrom,
+  from,
+  map,
+  shareReplay,
+  switchMap,
+} from 'rxjs';
+import { contrastRolesStore } from '@kbn/contrast-roles';
 
 export interface PaletteServiceSetup {
   /**
@@ -23,7 +32,7 @@ export interface PaletteServiceSetup {
   getPalettes: () => Promise<PaletteRegistry>;
   /**
    * An observable of the palette registry that emits a new registry whenever the
-   * theme values relevant to palettes (dark mode / theme name) change.
+   * theme values relevant to palettes (dark mode / theme name) or the contrast roles state change.
    */
   getPalettes$: () => Observable<PaletteRegistry>;
 }
@@ -50,11 +59,16 @@ export class PaletteService {
       const theme$ = this.theme$;
       this.palettes$ = from(import('./palettes')).pipe(
         switchMap(({ buildPalettes }) =>
-          theme$.pipe(
-            distinctUntilChanged(
-              (previous, next) => previous.darkMode === next.darkMode && previous.name === next.name
+          combineLatest([
+            theme$.pipe(
+              distinctUntilChanged(
+                (previous, next) =>
+                  previous.darkMode === next.darkMode && previous.name === next.name
+              )
             ),
-            map((theme) => {
+            contrastRolesStore.state$,
+          ]).pipe(
+            map(([theme]) => {
               this.currentPalettes = buildPalettes(theme);
               return this.createRegistry();
             })

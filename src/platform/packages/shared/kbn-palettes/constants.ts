@@ -33,14 +33,6 @@ const categorical = {
    */
   ElasticLineOptimized: 'elastic_line_optimized' as const,
   /**
-   * EUI's Default palette, kept to compare with the contrast roles version
-   */
-  ElasticEui: 'elastic_eui' as const,
-  /**
-   * EUI's line optimized palette, kept to compare with the contrast roles version
-   */
-  ElasticLineOptimizedEui: 'elastic_line_optimized_eui' as const,
-  /**
    * Neutral palette
    */
   Neutral: 'neutral' as const,

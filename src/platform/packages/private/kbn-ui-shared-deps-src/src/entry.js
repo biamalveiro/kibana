@@ -20,6 +20,7 @@ if (window.__kbnHardenPrototypes__) {
 
 // stateful deps
 export const KbnUiTheme = require('@kbn/ui-theme');
+export const KbnContrastRoles = require('@kbn/contrast-roles');
 export const KbnI18n = require('@kbn/i18n');
 export const KbnI18nReact = require('@kbn/i18n-react');
 export const EmotionCache = require('@emotion/cache');

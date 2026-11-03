@@ -7,10 +7,9 @@
  * License v3.0 only", or the "Server Side Public License, v 1".
  */
 
+import { contrastRolesStore, type ContrastRolesState } from '@kbn/contrast-roles';
 import { KbnPalettes } from '../classes/palettes';
 import {
-  elasticEuiPalette,
-  elasticLineOptimizedEuiPalette,
   getElasticPalette,
   getElasticLineOptimizedPalette,
   getNeutralPalette,
@@ -30,55 +29,40 @@ import {
 } from './gradient';
 export { logLevelPalette } from './semantic';
 
-const darkKbnPalettes = new KbnPalettes(
-  [
-    getElasticPalette(true),
-    getElasticLineOptimizedPalette(true),
-    elasticEuiPalette,
-    elasticLineOptimizedEuiPalette,
-    severityPalette,
-    kibana7Palette,
-    kibana4Palette,
-    getNeutralPalette(true),
-    complementaryPalette,
-    coolPalette,
-    grayPalette,
-    greenPalette,
-    redPalette,
-    statusPalette,
-    temperaturePalette,
-    warmPalette,
-    elasticClassicPalette,
-    compareToPalette,
-  ],
-  getElasticPalette(true)
-);
+const buildKbnPalettes = (darkMode: boolean) =>
+  new KbnPalettes(
+    [
+      getElasticPalette(darkMode),
+      getElasticLineOptimizedPalette(darkMode),
+      severityPalette,
+      kibana7Palette,
+      kibana4Palette,
+      getNeutralPalette(darkMode),
+      complementaryPalette,
+      coolPalette,
+      grayPalette,
+      greenPalette,
+      redPalette,
+      statusPalette,
+      temperaturePalette,
+      warmPalette,
+      elasticClassicPalette,
+      compareToPalette,
+    ],
+    getElasticPalette(darkMode)
+  );
 
-const lightKbnPalettes = new KbnPalettes(
-  [
-    getElasticPalette(false),
-    getElasticLineOptimizedPalette(false),
-    elasticEuiPalette,
-    elasticLineOptimizedEuiPalette,
-    severityPalette,
-    kibana7Palette,
-    kibana4Palette,
-    getNeutralPalette(false),
-    complementaryPalette,
-    coolPalette,
-    grayPalette,
-    greenPalette,
-    redPalette,
-    statusPalette,
-    temperaturePalette,
-    warmPalette,
-    elasticClassicPalette,
-    compareToPalette,
-  ],
-  getElasticPalette(false)
-);
+// A new registry per contrast roles state, so consumers memoized on it recompute when the switch or its parameters
+// change; the palettes inside read the state when called.
+let cached: { state: ContrastRolesState; light: KbnPalettes; dark: KbnPalettes } | undefined;
 
-export const getPalettes = (darkMode: boolean) => (darkMode ? darkKbnPalettes : lightKbnPalettes);
+export const getPalettes = (darkMode: boolean): KbnPalettes => {
+  const state = contrastRolesStore.get();
+  if (cached?.state !== state) {
+    cached = { state, light: buildKbnPalettes(false), dark: buildKbnPalettes(true) };
+  }
+  return darkMode ? cached.dark : cached.light;
+};
 
 export { elasticPalette, elasticLineOptimizedPalette } from './categorical';
 export * from './get_kbn_palettes';

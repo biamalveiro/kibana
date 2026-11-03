@@ -30,6 +30,12 @@ const LazyColorThemeToggle = lazy(() =>
   }))
 );
 
+const LazyContrastRolesControls = lazy(() =>
+  import('@kbn/developer-toolbar').then(({ ContrastRolesControls }) => ({
+    default: ContrastRolesControls,
+  }))
+);
+
 const LazyMeasureButton = lazy(() =>
   import('@kbn/design-tools').then(({ MeasureButton }) => ({
     default: MeasureButton,
@@ -68,6 +74,15 @@ export class DeveloperToolbarPlugin
       children: (
         <Suspense fallback={null}>
           <LazyColorThemeToggle theme={core.theme as InternalThemeServiceStart} />
+        </Suspense>
+      ),
+    });
+
+    this.registerItem({
+      id: 'Contrast Roles',
+      children: (
+        <Suspense fallback={null}>
+          <LazyContrastRolesControls />
         </Suspense>
       ),
     });

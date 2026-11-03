@@ -81,17 +81,6 @@ export const elasticLineOptimizedPalette = new KbnColorFnPalette({
   colorFn: euiColors,
 });
 
-/** EUI's line optimized palette under its own ID, to compare with the contrast roles version. */
-export const elasticLineOptimizedEuiPalette = new KbnColorFnPalette({
-  ...commonProps,
-  id: KbnPalette.ElasticLineOptimizedEui,
-  name: i18n.translate('palettes.elasticLineOptimizedEui.name', {
-    defaultMessage: 'Elastic (line optimized, before)',
-  }),
-  colorCount: EUI_COLOR_COUNT,
-  colorFn: euiColors,
-});
-
 const withContrastRoles = (mode: Mode) => {
   const isOn = () => contrastRolesStore.get().enabled;
   return new KbnColorFnPalette({

@@ -39,6 +39,7 @@ const externals = {
    * stateful deps
    */
   '@kbn/ui-theme': '__kbnSharedDeps__.KbnUiTheme',
+  '@kbn/contrast-roles': '__kbnSharedDeps__.KbnContrastRoles',
   '@kbn/i18n': '__kbnSharedDeps__.KbnI18n',
   '@kbn/i18n-react': '__kbnSharedDeps__.KbnI18nReact',
   '@emotion/cache': '__kbnSharedDeps__.EmotionCache',
