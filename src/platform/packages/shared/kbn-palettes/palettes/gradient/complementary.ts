@@ -9,17 +9,20 @@
 
 import { i18n } from '@kbn/i18n';
 import { euiPaletteComplementary } from '@elastic/eui';
-import { KbnColorFnPalette } from '../../classes/color_fn_palette';
 import { KbnPalette } from '../../constants';
+import { withContrastRoles } from '../contrast_roles';
 
-export const complementaryPalette = new KbnColorFnPalette({
-  id: KbnPalette.Complementary,
-  aliases: [
-    'complimentary', // mis-spelled id previously used
-  ],
-  type: 'gradient',
-  name: i18n.translate('palettes.complementary.name', {
-    defaultMessage: 'Complementary',
-  }),
-  colorFn: euiPaletteComplementary,
-});
+export const getComplementaryPalette = withContrastRoles(
+  {
+    id: KbnPalette.Complementary,
+    aliases: [
+      'complimentary', // mis-spelled id previously used
+    ],
+    type: 'gradient',
+    name: i18n.translate('palettes.complementary.name', {
+      defaultMessage: 'Complementary',
+    }),
+  },
+  ({ complementary }) => complementary,
+  euiPaletteComplementary
+);

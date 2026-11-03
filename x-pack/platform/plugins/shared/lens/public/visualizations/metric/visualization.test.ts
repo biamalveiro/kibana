@@ -15,6 +15,8 @@ import type {
 // Static EUI token values for assertions
 // eslint-disable-next-line @elastic/eui/no-restricted-eui-imports
 import { euiThemeVars } from '@kbn/ui-theme';
+import { DEFAULT_STATE, contrastRolesStore } from '@kbn/contrast-roles';
+import { KbnPalette, getKbnPalettes } from '@kbn/palettes';
 import { LayerTypes } from '@kbn/expression-xy-plugin/public';
 import type { FrameMock } from '../../mocks';
 import { createMockDatasource, createMockFramePublicAPI, generateActiveData } from '../../mocks';
@@ -45,6 +47,10 @@ describe('metric visualization', () => {
     paletteService,
     theme,
   });
+
+  // The expected default colors are EUI's.
+  beforeAll(() => contrastRolesStore.set({ enabled: false }));
+  afterAll(() => contrastRolesStore.set(DEFAULT_STATE));
 
   const palette: PaletteOutput<CustomPaletteParams> = {
     type: 'palette',
@@ -1141,6 +1147,23 @@ describe('metric visualization', () => {
             ) as ExpressionAstExpression
           ).chain[1].arguments.color[0]
         ).toBe(color);
+      });
+
+      describe('with contrast roles on', () => {
+        beforeEach(() => contrastRolesStore.set({ enabled: true }));
+        afterEach(() => contrastRolesStore.set({ enabled: false }));
+
+        it('defaults the background to the first faint color', () => {
+          const [faint] = getKbnPalettes(theme.getTheme()).get(KbnPalette.ElasticFaint).colors(1);
+          expect(
+            (
+              visualization.toExpression(
+                { ...fullState, applyColorTo: 'background', showBar: false, color: undefined },
+                datasourceLayers
+              ) as ExpressionAstExpression
+            ).chain[1].arguments.color[0]
+          ).toBe(faint);
+        });
       });
 
       it('can use a default color', () => {

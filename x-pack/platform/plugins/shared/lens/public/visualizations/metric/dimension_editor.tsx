@@ -52,7 +52,12 @@ import {
   LENS_PALETTE_MAX_COLOR_RANGES,
 } from '../../shared_components';
 import { defaultNumberPaletteParams, defaultPercentagePaletteParams } from './palette_config';
-import { DEFAULT_MAX_COLUMNS, getDefaultColor, showingBar } from './visualization';
+import {
+  DEFAULT_MAX_COLUMNS,
+  getDefaultColor,
+  getFaintBackgroundSwatches,
+  showingBar,
+} from './visualization';
 import { CollapseSetting } from '../../shared_components/collapse_setting';
 import { metricIconsSet } from '../../shared_components/icon_set';
 import { getColorMode } from './helpers';
@@ -687,6 +692,7 @@ function useScrollIntoView() {
 }
 
 function PrimaryMetricEditor({ state, setState, datasource, accessor, frame }: SubProps) {
+  const palettes = useKbnPalettes();
   const primaryMetricTypeFallback = getColumnFromActiveData({
     accessor: state.metricAccessor,
     activeData: frame?.activeData,
@@ -704,14 +710,16 @@ function PrimaryMetricEditor({ state, setState, datasource, accessor, frame }: S
     [setState, state]
   );
   const getColor = useCallback(() => {
-    return state.color || getDefaultColor(state, isMetricNumeric);
-  }, [state, isMetricNumeric]);
+    return state.color || getDefaultColor(state, isMetricNumeric, palettes);
+  }, [state, isMetricNumeric, palettes]);
 
   if (accessor == null) {
     return null;
   }
 
   const showStaticColorControl = !isMetricNumeric;
+  const swatches =
+    state.applyColorTo === 'background' ? getFaintBackgroundSwatches(palettes) : undefined;
 
   return (
     <div
@@ -721,7 +729,7 @@ function PrimaryMetricEditor({ state, setState, datasource, accessor, frame }: S
       `}
     >
       {showStaticColorControl ? (
-        <StaticColorControl getColor={getColor} setColor={setColor} />
+        <StaticColorControl getColor={getColor} setColor={setColor} swatches={swatches} />
       ) : null}
 
       {/* TODO: remove this in favor of global style settings */}
@@ -850,6 +858,7 @@ export function DimensionEditorAdditionalSection({
   isInlineEditing,
 }: Props) {
   const euiThemeContext = useEuiTheme();
+  const palettes = useKbnPalettes();
 
   const selectedSupportingVisualization = supportingVisualization(state);
   const { anchorRef: colorControlsAnchorRef, scrollIntoView: scrollToColorControls } =
@@ -874,8 +883,8 @@ export function DimensionEditorAdditionalSection({
   );
 
   const getColor = useCallback(() => {
-    return state.color || getDefaultColor(state, isMetricNumeric);
-  }, [state, isMetricNumeric]);
+    return state.color || getDefaultColor(state, isMetricNumeric, palettes);
+  }, [state, isMetricNumeric, palettes]);
 
   if (accessor == null) {
     return null;
@@ -1272,9 +1281,13 @@ export function DimensionEditorAdditionalSection({
               label={i18n.translate('xpack.lens.primaryMetric.colorLabel', {
                 defaultMessage: 'Value',
               })}
-              {...(showVisTextColorSwatches
-                ? { swatches: visTextColorSwatches(euiThemeContext) }
-                : undefined)}
+              swatches={
+                showVisTextColorSwatches
+                  ? visTextColorSwatches(euiThemeContext)
+                  : state.applyColorTo === 'background'
+                  ? getFaintBackgroundSwatches(palettes)
+                  : undefined
+              }
             />
           )}
         </>

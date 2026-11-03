@@ -12,6 +12,8 @@ import { getOverridePaletteColors } from '@kbn/coloring';
 import { VIS_EVENT_TO_TRIGGER } from '@kbn/visualizations-plugin/public';
 // eslint-disable-next-line @elastic/eui/no-restricted-eui-imports
 import { euiThemeVars } from '@kbn/ui-theme';
+import { contrastRolesStore } from '@kbn/contrast-roles';
+import { KbnPalette, getKbnPalettes, type KbnPalettes } from '@kbn/palettes';
 import { IconChartMetric } from '@kbn/chart-icons';
 import type { AccessorConfig } from '@kbn/visualization-ui-components';
 import type { ThemeServiceStart } from '@kbn/core/public';
@@ -60,14 +62,24 @@ export const showingBar = (
 ): state is MetricVisualizationState & { showBar: true; maxAccessor: string } =>
   Boolean(state.showBar && state.maxAccessor);
 
-export const getDefaultColor = (state: MetricVisualizationState, isMetricNumeric?: boolean) => {
+/** Elastic faint, offered for metric backgrounds while contrast roles are on. */
+export const getFaintBackgroundSwatches = (palettes: KbnPalettes): string[] | undefined =>
+  contrastRolesStore.get().enabled ? palettes.query(KbnPalette.ElasticFaint)?.colors() : undefined;
+
+export const getDefaultColor = (
+  state: MetricVisualizationState,
+  isMetricNumeric: boolean | undefined,
+  palettes: KbnPalettes
+) => {
   if (showingBar(state) && isMetricNumeric) {
     return euiThemeVars.euiColorVis2;
   }
   if (state.applyColorTo === 'value') {
     return euiThemeVars.euiColorVisText0;
   }
-  return euiThemeVars.euiColorEmptyShade;
+  const [faint] =
+    (state.applyColorTo === 'background' && getFaintBackgroundSwatches(palettes)) || [];
+  return faint ?? euiThemeVars.euiColorEmptyShade;
 };
 
 export const supportedDataTypes = new Set(['string', 'boolean', 'number', 'ip', 'date']);
@@ -120,7 +132,9 @@ const getMetricLayerConfiguration = (
 
     return {
       triggerIconType: 'color',
-      color: props.state.color ?? getDefaultColor(props.state, isPrimaryMetricNumeric),
+      color:
+        props.state.color ??
+        getDefaultColor(props.state, isPrimaryMetricNumeric, getKbnPalettes(theme.getTheme())),
     };
   };
 
@@ -832,7 +846,7 @@ export const getMetricVisualization = ({
             ? colors
             : hasStaticColoring
             ? [state.color]
-            : [getDefaultColor(state, isMetricNumeric)]
+            : [getDefaultColor(state, isMetricNumeric, getKbnPalettes(theme.getTheme()))]
           ).filter(nonNullable),
         },
       ],

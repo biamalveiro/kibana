@@ -216,6 +216,18 @@ function buildCustomPalette(): PaletteDefinition {
 export const buildPalettes = (theme: CoreTheme): Record<string, PaletteDefinition> => {
   const kbnPalettes = getKbnPalettes(theme);
   const defaultPalette = kbnPalettes.get(KbnPalette.Default);
+  // Contrast roles faint gradients; only in themes that list them.
+  const faintGradients = [
+    KbnPalette.CoolFaint,
+    KbnPalette.RedFaint,
+    KbnPalette.TemperatureFaint,
+    KbnPalette.GreenFaint,
+    KbnPalette.ComplementaryFaint,
+    KbnPalette.StatusFaint,
+  ].flatMap((id) => {
+    const palette = kbnPalettes.query(id);
+    return palette ? [[id, buildGradient(id, palette)] as const] : [];
+  });
   return {
     default: {
       title: defaultPalette.name,
@@ -242,6 +254,7 @@ export const buildPalettes = (theme: CoreTheme): Record<string, PaletteDefinitio
     cool: buildGradient('cool', kbnPalettes.get('cool')),
     warm: buildGradient('warm', kbnPalettes.get('warm')),
     gray: buildGradient('gray', kbnPalettes.get('gray')),
+    ...Object.fromEntries(faintGradients),
     [COMPATIBILITY_PALETTE_ID]: {
       title: i18n.translate('charts.palettes.kibanaPaletteLabel', {
         defaultMessage: 'Compatibility',

@@ -33,6 +33,10 @@ const categorical = {
    */
   ElasticLineOptimized: 'elastic_line_optimized' as const,
   /**
+   * Contrast roles faint per hue: fills behind text, such as table cells and metric backgrounds.
+   */
+  ElasticFaint: 'elastic_faint' as const,
+  /**
    * Neutral palette
    */
   Neutral: 'neutral' as const,
@@ -66,6 +70,13 @@ const gradient = {
   Complementary: 'complementary' as const,
   Status: 'status' as const,
   CompareTo: 'compare_to' as const,
+  // Contrast roles faint gradients: fills behind text, such as metric backgrounds.
+  CoolFaint: 'cool_faint' as const,
+  RedFaint: 'red_faint' as const,
+  TemperatureFaint: 'temperature_faint' as const,
+  GreenFaint: 'green_faint' as const,
+  ComplementaryFaint: 'complementary_faint' as const,
+  StatusFaint: 'status_faint' as const,
 };
 
 /**

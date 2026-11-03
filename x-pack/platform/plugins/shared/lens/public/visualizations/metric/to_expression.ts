@@ -16,6 +16,7 @@ import type { Ast } from '@kbn/interpreter';
 import { LayoutDirection } from '@elastic/charts';
 import { hasIcon } from '@kbn/visualization-ui-components';
 import type { ThemeServiceStart } from '@kbn/core/public';
+import { getKbnPalettes } from '@kbn/palettes';
 import type { DatasourceLayers, MetricVisualizationState } from '@kbn/lens-common';
 import {
   LENS_METRIC_STATE_DEFAULTS,
@@ -229,7 +230,7 @@ export const toExpression = (
     valueFontSize: state.valueFontMode ?? LENS_METRIC_STATE_DEFAULTS.valueFontMode,
     density: state.density ?? LENS_METRIC_STATE_DEFAULTS.density,
     primaryPosition,
-    color: state.color ?? getDefaultColor(state, isMetricNumeric),
+    color: state.color ?? getDefaultColor(state, isMetricNumeric, getKbnPalettes(theme.getTheme())),
     icon: hasMetricIcon ? state.icon : undefined,
     palette:
       isMetricNumeric && state.palette?.params

@@ -8,7 +8,7 @@
  */
 
 import { DEFAULT_PARAMS } from './src';
-import { SURFACES, borealis } from './borealis';
+import { SURFACES, borealis, borealisStatus } from './borealis';
 import { themeAware } from './palettes';
 
 // From `npm run check` in vis-color-workbench, with DEFAULT_PARAMS.
@@ -51,4 +51,30 @@ describe('contrast roles on Borealis', () => {
     expect(cool).toHaveLength(5);
     expect(cool[4]).toBe('#61A2FF');
   });
+
+  it.each(['light', 'dark'] as const)('runs faint ramps from faint to muted in %s mode', (mode) => {
+    const [, blue] = Object.values(EXPECTED[mode]);
+    const coolFaint = themeAware(mode).coolFaint(4);
+    expect(coolFaint[0]).toBe(blue[0]);
+    expect(coolFaint[3]).toBe(blue[1]);
+  });
+
+  it.each(['light', 'dark'] as const)('ramps positive on the success hue in %s mode', (mode) => {
+    const [success] = borealisStatus.palettes(SURFACES[mode], DEFAULT_PARAMS).roles;
+    const { positive, positiveFaint } = themeAware(mode);
+    expect([positive(5)[0], positive(5)[4]]).toEqual([success.faint, success.base]);
+    expect([positiveFaint(4)[0], positiveFaint(4)[3]]).toEqual([success.faint, success.muted]);
+  });
+
+  it.each(['light', 'dark'] as const)(
+    'steps status faint through each status faint in %s mode',
+    (mode) => {
+      const faints = borealisStatus
+        .palettes(SURFACES[mode], DEFAULT_PARAMS)
+        .roles.map(({ faint }) => faint);
+      const status = themeAware(mode).statusFaint(5);
+      expect(new Set(status).size).toBe(5);
+      expect([status[0], status[2], status[4]]).toEqual(faints);
+    }
+  );
 });

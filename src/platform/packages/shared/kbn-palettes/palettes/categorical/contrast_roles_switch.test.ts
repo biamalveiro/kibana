@@ -7,6 +7,12 @@
  * License v3.0 only", or the "Server Side Public License, v 1".
  */
 
+import {
+  euiPaletteComplementary,
+  euiPaletteCool,
+  euiPaletteGreen,
+  euiPaletteRed,
+} from '@elastic/eui';
 import { DEFAULT_STATE, contrastRolesStore, themeAware } from '@kbn/contrast-roles';
 import { KbnPalette } from '../../constants';
 import { getPalettes } from '..';
@@ -18,6 +24,36 @@ import {
 
 describe('contrast roles switch', () => {
   afterEach(() => contrastRolesStore.set(DEFAULT_STATE));
+
+  it('switches gradients in place', () => {
+    const light = getPalettes(false);
+    const dark = getPalettes(true);
+    expect(light.get(KbnPalette.Cool).colors(5)).toEqual(themeAware('light').cool(5));
+    expect(dark.get(KbnPalette.Temperature).colors(5)).toEqual(themeAware('dark').temperature(5));
+    expect(light.get('positive').colors(5)).toEqual(themeAware('light').positive(5));
+    expect(dark.get(KbnPalette.Complementary).colors(5)).toEqual(
+      themeAware('dark').complementary(5)
+    );
+
+    contrastRolesStore.set({ enabled: false });
+    expect(getPalettes(false).get(KbnPalette.Cool).colors(5)).toEqual(euiPaletteCool(5));
+    expect(getPalettes(false).get('negative').colors(5)).toEqual(euiPaletteRed(5));
+    expect(getPalettes(false).get('positive').colors(5)).toEqual(euiPaletteGreen(5));
+    expect(getPalettes(false).get(KbnPalette.Complementary).colors(5)).toEqual(
+      euiPaletteComplementary(5)
+    );
+  });
+
+  it('keeps the faint palettes on contrast roles when off', () => {
+    contrastRolesStore.set({ enabled: false });
+    const palettes = getPalettes(false);
+    expect(palettes.get(KbnPalette.ElasticFaint).colors()).toEqual(
+      themeAware('light').elasticFaint(6)
+    );
+    expect(palettes.get(KbnPalette.StatusFaint).colors(3)).toEqual(
+      themeAware('light').statusFaint(3)
+    );
+  });
 
   it('uses contrast roles colors per mode when on', () => {
     expect(getElasticPalette(false).colors(12)).toEqual(themeAware('light').elastic(12));
