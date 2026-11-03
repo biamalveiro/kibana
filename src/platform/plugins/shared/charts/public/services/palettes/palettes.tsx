@@ -216,6 +216,22 @@ function buildCustomPalette(): PaletteDefinition {
 export const buildPalettes = (theme: CoreTheme): Record<string, PaletteDefinition> => {
   const kbnPalettes = getKbnPalettes(theme);
   const defaultPalette = kbnPalettes.get(KbnPalette.Default);
+  // EUI's categorical palettes before contrast roles, to compare; only in themes that list them.
+  const beforePalettes = [KbnPalette.ElasticEui, KbnPalette.ElasticLineOptimizedEui].flatMap(
+    (id) => {
+      const palette = kbnPalettes.query(id);
+      if (!palette) return [];
+      const definition: PaletteDefinition = {
+        title: palette.name,
+        ...buildRoundRobinCategoricalWithMappedColors(
+          id,
+          palette.colors(),
+          kbnPalettes.query(KbnPalette.Kibana7BehindText)?.colors()
+        ),
+      };
+      return [[id, definition] as const];
+    }
+  );
   return {
     default: {
       title: defaultPalette.name,
@@ -234,6 +250,7 @@ export const buildPalettes = (theme: CoreTheme): Record<string, PaletteDefinitio
         kbnPalettes.query(KbnPalette.Kibana7BehindText)?.colors()
       ),
     },
+    ...Object.fromEntries(beforePalettes),
     status: buildGradient('status', kbnPalettes.get('status')),
     temperature: buildGradient('temperature', kbnPalettes.get('temperature')),
     complementary: buildGradient('complementary', kbnPalettes.get('complementary')),

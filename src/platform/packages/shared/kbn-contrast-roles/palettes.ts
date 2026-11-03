@@ -26,6 +26,8 @@ export interface ThemeAwarePalettes {
   red: (n: number) => Hex[];
   /** `temperature`: blue to red, with a surface-tinted middle. */
   temperature: (n: number) => Hex[];
+  /** Distinct colors per categorical palette, before they repeat. */
+  counts: { elastic: number; elasticLineOptimized: number; elasticFaint: number };
 }
 
 // Past their length, categorical palettes repeat.
@@ -58,5 +60,10 @@ export const themeAware = (mode: Mode): ThemeAwarePalettes => {
     warm: (n) => sequential('red', n),
     red: (n) => sequential('red', n),
     temperature: (n) => diverging('blue', 'red', n),
+    counts: {
+      elastic: intertwined.length,
+      elasticLineOptimized: lines.length,
+      elasticFaint: roles.length,
+    },
   };
 };

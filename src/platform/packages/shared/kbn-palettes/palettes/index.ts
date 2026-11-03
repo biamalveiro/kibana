@@ -9,8 +9,10 @@
 
 import { KbnPalettes } from '../classes/palettes';
 import {
-  elasticPalette,
-  elasticLineOptimizedPalette,
+  elasticEuiPalette,
+  elasticLineOptimizedEuiPalette,
+  getElasticPalette,
+  getElasticLineOptimizedPalette,
   getNeutralPalette,
   severityPalette,
 } from './categorical';
@@ -30,8 +32,10 @@ export { logLevelPalette } from './semantic';
 
 const darkKbnPalettes = new KbnPalettes(
   [
-    elasticPalette,
-    elasticLineOptimizedPalette,
+    getElasticPalette(true),
+    getElasticLineOptimizedPalette(true),
+    elasticEuiPalette,
+    elasticLineOptimizedEuiPalette,
     severityPalette,
     kibana7Palette,
     kibana4Palette,
@@ -47,13 +51,15 @@ const darkKbnPalettes = new KbnPalettes(
     elasticClassicPalette,
     compareToPalette,
   ],
-  elasticPalette
+  getElasticPalette(true)
 );
 
 const lightKbnPalettes = new KbnPalettes(
   [
-    elasticPalette,
-    elasticLineOptimizedPalette,
+    getElasticPalette(false),
+    getElasticLineOptimizedPalette(false),
+    elasticEuiPalette,
+    elasticLineOptimizedEuiPalette,
     severityPalette,
     kibana7Palette,
     kibana4Palette,
@@ -69,7 +75,7 @@ const lightKbnPalettes = new KbnPalettes(
     elasticClassicPalette,
     compareToPalette,
   ],
-  elasticPalette
+  getElasticPalette(false)
 );
 
 export const getPalettes = (darkMode: boolean) => (darkMode ? darkKbnPalettes : lightKbnPalettes);

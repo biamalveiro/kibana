@@ -19,6 +19,7 @@ project:
 dependsOn:
   - '@kbn/i18n'
   - '@kbn/core-theme-browser'
+  - '@kbn/contrast-roles'
 tags:
   - shared-common
   - package

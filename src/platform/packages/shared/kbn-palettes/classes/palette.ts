@@ -11,9 +11,12 @@ import type { Optional } from 'utility-types';
 import type { IKbnPalette, KbnPaletteType } from './types';
 
 export type KbnBasePaletteConfig = Optional<
-  Pick<IKbnPalette, 'id' | 'name' | 'tag' | 'colorCount' | 'legacy' | 'aliases' | 'standalone'>,
+  Pick<IKbnPalette, 'id' | 'name' | 'tag' | 'legacy' | 'aliases' | 'standalone'>,
   'legacy' | 'aliases'
->;
+> & {
+  /** A function when the count can change at runtime (contrast roles switch). */
+  colorCount: number | (() => number);
+};
 
 export abstract class KbnBasePalette implements IKbnPalette {
   public abstract type: KbnPaletteType;
@@ -21,10 +24,11 @@ export abstract class KbnBasePalette implements IKbnPalette {
   public readonly id: IKbnPalette['id'];
   public readonly name: string;
   public readonly tag?: string;
-  public readonly colorCount: number;
   public readonly legacy: boolean;
   public readonly standalone: boolean;
   public readonly aliases: string[];
+
+  #colorCount: number | (() => number);
 
   constructor({
     id,
@@ -38,10 +42,14 @@ export abstract class KbnBasePalette implements IKbnPalette {
     this.id = id;
     this.name = name;
     this.tag = tag;
-    this.colorCount = colorCount;
+    this.#colorCount = colorCount;
     this.legacy = legacy;
     this.standalone = standalone;
     this.aliases = aliases;
+  }
+
+  public get colorCount(): number {
+    return typeof this.#colorCount === 'function' ? this.#colorCount() : this.#colorCount;
   }
 
   public abstract colors: (n?: number | undefined) => string[];

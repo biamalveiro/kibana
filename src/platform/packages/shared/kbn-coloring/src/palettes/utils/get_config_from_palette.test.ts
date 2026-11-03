@@ -7,6 +7,7 @@
  * License v3.0 only", or the "Server Side Public License, v 1".
  */
 
+import { DEFAULT_STATE, contrastRolesStore } from '@kbn/contrast-roles';
 import type { IKbnPalette } from '@kbn/palettes';
 import { KbnPalette, getKbnPalettes } from '@kbn/palettes';
 
@@ -17,6 +18,10 @@ import { getConfigFromPalette } from './get_config_from_palette';
 const palettes = getKbnPalettes({ name: 'borealis', darkMode: false });
 
 describe('getConfigFromPalette', () => {
+  // The expected color indices are positions in EUI's default palette.
+  beforeAll(() => contrastRolesStore.set({ enabled: false }));
+  afterAll(() => contrastRolesStore.set(DEFAULT_STATE));
+
   describe('categorical', () => {
     it('should return default color mapping with old id', () => {
       const result = getConfigFromPalette(palettes, KbnPalette.Default);

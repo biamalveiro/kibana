@@ -9,8 +9,9 @@
 
 import { i18n } from '@kbn/i18n';
 import { euiPaletteColorBlind } from '@elastic/eui';
+import { contrastRolesStore, themeAware, type Mode } from '@kbn/contrast-roles';
 import { KbnPalette } from '../../constants';
-import { KbnColorFnPalette } from '../../classes/color_fn_palette';
+import { KbnColorFnPalette, type KbnColorFnPaletteConfig } from '../../classes/color_fn_palette';
 
 /**
  * Index pairs to swap within each group of 10 palette colors.
@@ -55,19 +56,57 @@ export function reorderDarkFirst(colors: string[]): string[] {
   return result;
 }
 
-export const elasticLineOptimizedPalette = new KbnColorFnPalette({
+const EUI_COLOR_COUNT = 10;
+
+const commonProps = {
   id: KbnPalette.ElasticLineOptimized,
   type: 'categorical',
   aliases: [],
-  colorCount: 10,
   defaultNumberOfColors: 30,
   name: i18n.translate('palettes.elasticLineOptimized.name', {
     defaultMessage: 'Elastic (line optimized)',
   }),
-  colorFn: (n) => {
-    const base = reorderDarkFirst(swapColorPairs(euiPaletteColorBlind()));
-    // Repeat the base 10 colors without lightening on each rotation. In lines, lighter tones contrast is too low
-    // + differences between rotations are hard to perceive.
-    return Array.from({ length: n }, (_, i) => base[i % base.length]);
-  },
+} satisfies Omit<KbnColorFnPaletteConfig, 'colorFn'>;
+
+const euiColors = (n: number) => {
+  const base = reorderDarkFirst(swapColorPairs(euiPaletteColorBlind()));
+  // Repeat the base 10 colors without lightening on each rotation. In lines, lighter tones contrast is too low
+  // + differences between rotations are hard to perceive.
+  return Array.from({ length: n }, (_, i) => base[i % base.length]);
+};
+
+export const elasticLineOptimizedPalette = new KbnColorFnPalette({
+  ...commonProps,
+  colorCount: EUI_COLOR_COUNT,
+  colorFn: euiColors,
 });
+
+/** EUI's line optimized palette under its own ID, to compare with the contrast roles version. */
+export const elasticLineOptimizedEuiPalette = new KbnColorFnPalette({
+  ...commonProps,
+  id: KbnPalette.ElasticLineOptimizedEui,
+  name: i18n.translate('palettes.elasticLineOptimizedEui.name', {
+    defaultMessage: 'Elastic (line optimized, before)',
+  }),
+  colorCount: EUI_COLOR_COUNT,
+  colorFn: euiColors,
+});
+
+const withContrastRoles = (mode: Mode) => {
+  const isOn = () => contrastRolesStore.get().enabled;
+  return new KbnColorFnPalette({
+    ...commonProps,
+    // When on, the defaults stop at the palette's length: past it the colors repeat.
+    colorCount: () => (isOn() ? themeAware(mode).counts.elasticLineOptimized : EUI_COLOR_COUNT),
+    defaultNumberOfColors: () =>
+      isOn() ? themeAware(mode).counts.elasticLineOptimized : commonProps.defaultNumberOfColors,
+    colorFn: (n) => (isOn() ? themeAware(mode).elasticLineOptimized(n) : euiColors(n)),
+  });
+};
+
+const lightElasticLineOptimizedPalette = withContrastRoles('light');
+const darkElasticLineOptimizedPalette = withContrastRoles('dark');
+
+/** The line optimized palette for a mode: contrast roles colors when the switch is on, EUI's otherwise. */
+export const getElasticLineOptimizedPalette = (darkMode: boolean) =>
+  darkMode ? darkElasticLineOptimizedPalette : lightElasticLineOptimizedPalette;

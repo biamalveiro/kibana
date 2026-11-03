@@ -15,6 +15,8 @@ type SystemPaletteId = KbnPaletteId | 'kibana_palette' | 'custom' | 'negative' |
 export const paletteIds: SystemPaletteId[] = [
   'default',
   'elastic_line_optimized',
+  'elastic_eui',
+  'elastic_line_optimized_eui',
   'kibana_palette',
   'custom',
   'status',
