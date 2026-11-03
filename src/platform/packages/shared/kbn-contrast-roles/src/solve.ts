@@ -22,6 +22,7 @@ const CACHE_LIMIT = 20000;
 
 export interface LightnessQuery {
   angle: number; // hue
+  hueAt?: (L: number) => number; // the hue at each candidate lightness, when it turns with lightness
   target: number; // |Lc| to reach
   against: Hex; // what contrast is measured against
   from: number; // lightness to start at (the background's)
@@ -35,6 +36,7 @@ export function createSolver() {
   const cache = new Map<string, number>();
   return function solveLightness({
     angle,
+    hueAt,
     target,
     against,
     from,
@@ -46,7 +48,8 @@ export function createSolver() {
     const hit = cache.get(k);
     if (hit !== undefined) return hit;
     const at = (t: number) => clampL(from + (to - from) * t);
-    const lcAt = (L: number) => Math.abs(apcaLc(oklchToHex(L, chromaAt(L), angle), against));
+    const lcAt = (L: number) =>
+      Math.abs(apcaLc(oklchToHex(L, chromaAt(L), hueAt?.(L) ?? angle), against));
     let lo = 0;
     let hi = 1;
     for (let i = 0; i < ITERATIONS; i++) {

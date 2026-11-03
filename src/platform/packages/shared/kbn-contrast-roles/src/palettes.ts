@@ -7,12 +7,14 @@
  * License v3.0 only", or the "Server Side Public License, v 1".
  */
 
-// The palette lists a product needs, from a function that gives a role's color and one that gives a ramp step.
+// The palette lists a product needs, from a function that gives a role's color, one that gives a hue's stack pair,
+// and one that gives a ramp step.
 import { ROLES, type Hex, type Hue, type Palettes, type Role, type RoleColors } from './types';
 
 export function assemble(
   hues: Hue[],
   roleHex: (angle: number, role: Role) => Hex,
+  pairHex: (angle: number, roles: RoleColors) => [Hex, Hex],
   rampHex: (angle: number, t: number) => Hex,
   neutralHex: Hex
 ): Palettes {
@@ -29,7 +31,7 @@ export function assemble(
     Array.from({ length: n }, (_, k) => rampHex(angleOf(name), n > 1 ? k / (n - 1) : 1));
   return {
     roles,
-    intertwined: roles.flatMap((r) => [r.base, r.muted]),
+    intertwined: roles.flatMap((r) => pairHex(r.angle, r)),
     lines: [...roles.map((r) => r.base), ...roles.map((r) => r.strong)],
     sequential: ramp,
     // A neutral middle just off the surface; each arm is a sequential ramp of its hue.

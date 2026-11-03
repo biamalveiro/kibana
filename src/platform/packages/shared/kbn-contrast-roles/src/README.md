@@ -28,6 +28,7 @@ light.diverging('blue', 'red', 5);
 | `contrast_roles.ts` | `createContrastRoles`: base per hue, one color per target, every palette on a surface |
 | `solve.ts` | The lightness where a hue reaches an APCA Lc target (bisection, as apcach does) |
 | `hue_correction.ts` | Each hue's shift from its plain contrast lightness, and how it fades across roles |
+| `yellow.ts` | Yellow's corrections: darker yellows turn toward orange; on dark, its stack pair leads with a lighter yellow |
 | `chroma.ts` | How colorful each role is: cap and taper, or one chroma across hues |
 | `palettes.ts` | The lists a product needs: roles, stacked pairs, lines, sequential and diverging ramps |
 | `color.ts` | OKLCH and gamut (culori), WCAG contrast (culori) and APCA Lc (colorjs.io) |

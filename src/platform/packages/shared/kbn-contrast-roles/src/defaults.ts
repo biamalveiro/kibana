@@ -12,8 +12,8 @@ import type { Params } from './types';
 
 export const DEFAULT_PARAMS: Params = {
   lc: {
-    faint: 15, // fill: metric backgrounds, table cells, badges, area fills. APCA's floor for any visible element
-    muted: 30, // quieter mark: the second segment per hue in stacks. Set by eye, the same in both modes
+    faint: 10, // fill: metric backgrounds, table cells, badges, area fills. APCA's floor for any visible element
+    muted: 28, // quieter mark: the second segment per hue in stacks. Set by eye, the same in both modes
     base: 50, // mark: lines, bars, points. About L 0.71 on both white and navy, so one hex works in both modes
     strong: 70, // second mark tier: lines 7-12
     ink: 75, // text and icons on a faint fill, measured against faint (APCA's body-text minimum)
@@ -28,8 +28,8 @@ export const DEFAULT_PARAMS: Params = {
   chroma: {
     ceiling: 0.165, // most chroma base can carry (EUI's vis colors top out near 0.165)
     mode: 'cap', // 'cap' (cap from base, tapers) or 'even' (one chroma per role across hues, as Harmonizer does)
-    taper: 0.5, // 'cap': how fast chroma fades for colors lighter than base (against neon teal and yellow pastels)
-    taperDark: 0.25, // 'cap': the same for colors darker than base. Softer: dark yellow with little chroma reads as olive
+    taper: 0.7, // 'cap': how fast chroma fades for colors lighter than base (against neon teal and yellow pastels)
+    taperDark: 0.4, // 'cap': the same for colors darker than base. Softer: dark yellow with little chroma reads as olive
   },
   ramp: {
     from: 15, // Lc of a ramp's first step, just off the surface

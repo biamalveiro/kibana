@@ -19,7 +19,18 @@ import { hexToOklch, maxChroma, oklchToHex } from './color';
 import { correctionShare, cuspOffset } from './hue_correction';
 import { assemble } from './palettes';
 import { clampL, createSolver } from './solve';
-import type { BaseColor, Color, Hex, Hue, Palettes, Params, Role, Theme } from './types';
+import type {
+  BaseColor,
+  Color,
+  Hex,
+  Hue,
+  Palettes,
+  Params,
+  Role,
+  RoleColors,
+  Theme,
+} from './types';
+import { leadsWithLightPartner, LIGHT_PARTNER, yellowBaseChroma, yellowHueAt } from './yellow';
 
 // The diverging middle sits this far (OKLab L) off the surface. APCA can't place it: it reports 0 below about Lc 7.5,
 // and its smallest target is already a visible grey on white (#EEEDED).
@@ -58,12 +69,15 @@ export function createContrastRoles(theme: Theme) {
       key: `base|${ceil}`,
     });
     const anchor = p.base.from === 'anchor' && anchorByAngle.get(angle);
+    // Yellow on a dark surface is less colorful (yellow.ts).
+    const quiet = yellowBaseChroma(angle, Ls);
     if (anchor) {
       const { L, C } = hexToOklch(anchor);
-      return { hex: anchor, L, L0, C, h: angle };
+      if (quiet === 1) return { hex: anchor, L, L0, C, h: angle };
+      return { hex: oklchToHex(L, C * quiet, angle), L, L0, C: C * quiet, h: angle };
     }
     const L = clampL(L0 + cuspOffset(angle, p));
-    const C = fixedChroma(angle, L, ceil);
+    const C = fixedChroma(angle, L, ceil) * quiet;
     return { hex: oklchToHex(L, C, angle), L, L0, C, h: angle };
   }
 
@@ -80,12 +94,15 @@ export function createContrastRoles(theme: Theme) {
     const Ls = hexToOklch(surface).L;
     const end = farEnd(Ls);
     const base = baseColor(angle, surface, p);
+    // Yellow darker than base turns toward orange (yellow.ts); chroma follows the gamut at the turned hue.
+    const h = (L: number) => yellowHueAt(angle, L, base.L);
     const chromaAt =
       fixedC === null
-        ? (L: number) => capChroma(angle, L, target, base, p)
-        : (L: number) => fixedChroma(angle, L, fixedC);
+        ? (L: number) => capChroma(h(L), L, target, base, p)
+        : (L: number) => fixedChroma(h(L), L, fixedC);
     const L0 = solveLightness({
       angle,
+      hueAt: h,
       target,
       against,
       from: against === surface ? Ls : hexToOklch(against).L,
@@ -95,7 +112,7 @@ export function createContrastRoles(theme: Theme) {
     });
     const L = clampL(L0 + (base.L - base.L0) * correctionShare(L0, Ls, end, base.L0));
     const C = chromaAt(L);
-    return { hex: oklchToHex(L, C, angle), L, C, h: angle };
+    return { hex: oklchToHex(L, C, h(L)), L, C, h: h(L) };
   }
 
   // 'even' chroma: the lowest of the hues' in-gamut maxima at this target, under the ceiling.
@@ -146,6 +163,13 @@ export function createContrastRoles(theme: Theme) {
         C
       ).hex;
     };
+    // Stack pair: base, then muted. Yellow on a dark surface leads with a lighter partner, then base (yellow.ts).
+    const Ls = hexToOklch(surface).L;
+    const pair = (angle: number, r: RoleColors): [Hex, Hex] => {
+      if (!leadsWithLightPartner(angle, Ls, p)) return [r.base, r.muted];
+      const C = LIGHT_PARTNER.chroma * baseColor(angle, surface, p).C;
+      return [contrastColor(angle, LIGHT_PARTNER.lc, surface, p, surface, C).hex, r.base];
+    };
     const rampC: Record<number, number> = {};
     const ramp = (angle: number, t: number) => {
       const target = p.ramp.from + (p.ramp.to - p.ramp.from) * t;
@@ -154,7 +178,7 @@ export function createContrastRoles(theme: Theme) {
       if (even && !(target in rampC)) rampC[target] = evenChroma(target, surface, p);
       return contrastColor(angle, target, surface, p, surface, even ? rampC[target] : null).hex;
     };
-    return assemble(hues, role, ramp, neutralColor(surface));
+    return assemble(hues, role, pair, ramp, neutralColor(surface));
   }
 
   return {
