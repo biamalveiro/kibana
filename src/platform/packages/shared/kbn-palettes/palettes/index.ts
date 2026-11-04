@@ -13,6 +13,7 @@ import type { IKbnPalette } from '../classes/types';
 import type { BrandPalettes } from './brand';
 import { createBrandPalettes, getBrandPalettes } from './brand';
 import {
+  elasticOptionPalette,
   elasticPalette,
   elasticLineOptimizedPalette,
   getElasticFaintPalette,
@@ -45,12 +46,14 @@ export { logLevelPalette } from './semantic';
 const buildKbnPalettes = (
   darkMode: boolean,
   defaultPalette: IKbnPalette,
-  lineOptimizedPalette: IKbnPalette
+  lineOptimizedPalette: IKbnPalette,
+  additionalPalettes: IKbnPalette[] = []
 ) =>
   new KbnPalettes(
     [
       defaultPalette,
       lineOptimizedPalette,
+      ...additionalPalettes,
       revisedPalette,
       getHighContrastPalette(darkMode),
       getLowContrastPalette(darkMode),
@@ -90,9 +93,10 @@ const buildRegistries = (brandPalettes: BrandPalettes | undefined) => {
     defaultPalette: elasticPalette,
     lineOptimizedPalette: elasticLineOptimizedPalette,
   });
+  // The Elastic palette stays available as an option next to the brand palettes.
   return {
-    light: buildKbnPalettes(false, brandPalette, brandLineOptimizedPalette),
-    dark: buildKbnPalettes(true, brandPalette, brandLineOptimizedPalette),
+    light: buildKbnPalettes(false, brandPalette, brandLineOptimizedPalette, [elasticOptionPalette]),
+    dark: buildKbnPalettes(true, brandPalette, brandLineOptimizedPalette, [elasticOptionPalette]),
   };
 };
 
