@@ -10,7 +10,8 @@
 import { contrastRolesStore, type ContrastRolesState } from '@kbn/contrast-roles';
 import { KbnPalettes } from '../classes/palettes';
 import type { IKbnPalette } from '../classes/types';
-import { createBrandPalettes, getBrandColors } from './brand';
+import type { BrandPalettes } from './brand';
+import { createBrandPalettes, getBrandPalettes } from './brand';
 import {
   elasticPalette,
   elasticLineOptimizedPalette,
@@ -78,14 +79,14 @@ const buildKbnPalettes = (
     defaultPalette
   );
 
-const buildRegistries = (brandColors: readonly string[] | undefined) => {
-  if (!brandColors) {
+const buildRegistries = (brandPalettes: BrandPalettes | undefined) => {
+  if (!brandPalettes) {
     return {
       light: buildKbnPalettes(false, elasticPalette, elasticLineOptimizedPalette),
       dark: buildKbnPalettes(true, elasticPalette, elasticLineOptimizedPalette),
     };
   }
-  const { brandPalette, brandLineOptimizedPalette } = createBrandPalettes(brandColors, {
+  const { brandPalette, brandLineOptimizedPalette } = createBrandPalettes(brandPalettes, {
     defaultPalette: elasticPalette,
     lineOptimizedPalette: elasticLineOptimizedPalette,
   });
@@ -95,7 +96,7 @@ const buildRegistries = (brandColors: readonly string[] | undefined) => {
   };
 };
 
-// A new registry per contrast roles state and brand colors, so consumers memoized on it recompute when either
+// A new registry per contrast roles state and brand palettes, so consumers memoized on it recompute when either
 // changes; the contrast roles palettes inside read the state when called.
 let cached:
   | { state: ContrastRolesState; brandKey: string; light: KbnPalettes; dark: KbnPalettes }
@@ -103,14 +104,17 @@ let cached:
 
 export const getPalettes = (darkMode: boolean): KbnPalettes => {
   const state = contrastRolesStore.get();
-  const brandColors = getBrandColors();
-  const brandKey = brandColors?.join(',') ?? '';
+  const brandPalettes = getBrandPalettes();
+  const brandKey = brandPalettes
+    ? `${brandPalettes.categorical.join(',')}:${brandPalettes.lineOptimized.join(',')}`
+    : '';
   if (cached?.state !== state || cached.brandKey !== brandKey) {
-    cached = { state, brandKey, ...buildRegistries(brandColors) };
+    cached = { state, brandKey, ...buildRegistries(brandPalettes) };
   }
   return darkMode ? cached.dark : cached.light;
 };
 
-export { setBrandColors, getBrandColors } from './brand';
+export type { BrandPalettes } from './brand';
+export { generateBrandPalettes, getBrandPalettes, getLightTone, setBrandPalettes } from './brand';
 export { elasticPalette, elasticLineOptimizedPalette } from './categorical';
 export * from './get_kbn_palettes';
