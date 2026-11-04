@@ -17,6 +17,7 @@ import {
   firstValueFrom,
   from,
   map,
+  of,
   shareReplay,
   switchMap,
 } from 'rxjs';
@@ -32,18 +33,27 @@ export interface PaletteServiceSetup {
   getPalettes: () => Promise<PaletteRegistry>;
   /**
    * An observable of the palette registry that emits a new registry whenever the
-   * theme values relevant to palettes (dark mode / theme name) or the contrast roles state change.
+   * theme values relevant to palettes (dark mode / theme name), the contrast roles state or the
+   * brand palettes change.
    */
   getPalettes$: () => Observable<PaletteRegistry>;
 }
 
 export class PaletteService {
   private theme$?: Observable<CoreTheme>;
+  private brandPalettesChange$: Observable<unknown> = of(undefined);
   private palettes$?: Observable<PaletteRegistry>;
   private currentPalettes?: Record<string, PaletteDefinition<unknown>>;
 
-  public setup(theme$: Observable<CoreTheme>): PaletteServiceSetup {
+  /**
+   * @param brandPalettesChange$ emits when the brand palettes change, so the palettes are rebuilt.
+   */
+  public setup(
+    theme$: Observable<CoreTheme>,
+    brandPalettesChange$?: Observable<unknown>
+  ): PaletteServiceSetup {
     this.theme$ = theme$;
+    if (brandPalettesChange$) this.brandPalettesChange$ = brandPalettesChange$;
     return {
       getPalettes: () => firstValueFrom(this.getPalettes$()),
       getPalettes$: () => this.getPalettes$(),
@@ -57,6 +67,7 @@ export class PaletteService {
 
     if (!this.palettes$) {
       const theme$ = this.theme$;
+      const brandPalettesChange$ = this.brandPalettesChange$;
       this.palettes$ = from(import('./palettes')).pipe(
         switchMap(({ buildPalettes }) =>
           combineLatest([
@@ -67,6 +78,7 @@ export class PaletteService {
               )
             ),
             contrastRolesStore.state$,
+            brandPalettesChange$,
           ]).pipe(
             map(([theme]) => {
               this.currentPalettes = buildPalettes(theme);
