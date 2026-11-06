@@ -10,6 +10,10 @@
 export * from './palettes';
 export * from './classes';
 export * from './components';
-export { DEFAULT_FALLBACK_PALETTE, KbnPalette } from './constants';
+export {
+  CONTRAST_ROLES_CATEGORICAL_PALETTES,
+  DEFAULT_FALLBACK_PALETTE,
+  KbnPalette,
+} from './constants';
 
 export * from './hooks';

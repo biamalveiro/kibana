@@ -117,6 +117,10 @@ export interface PaletteDefinition<T = unknown> {
    */
   getCategoricalColors: (size: number, state?: T) => string[];
   /**
+   * Map saved colors to the current theme, for palettes that store colors (custom).
+   */
+  remapColors?: (colors: string[]) => string[];
+  /**
    * Define whether a palette supports dynamic coloring (i.e. gradient colors mapped to number values)
    */
   canDynamicColoring?: boolean;

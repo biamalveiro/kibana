@@ -13,6 +13,7 @@ import { getKbnPalettes, KbnPalette, type IKbnPalette } from '@kbn/palettes';
 import type { ChartColorConfiguration, PaletteDefinition, SeriesLayer } from '@kbn/coloring';
 import { flatten, zip } from 'lodash';
 import type { CoreTheme } from '@kbn/core/public';
+import { colorsToMode, type Mode } from '@kbn/contrast-roles';
 import { createColorPalette as createLegacyColorPalette } from '../..';
 import { MappedColors } from '../mapped_colors';
 import { workoutColorForValue } from './helpers';
@@ -112,9 +113,11 @@ function buildGradient(id: string, palette: IKbnPalette): PaletteDefinition {
   };
 }
 
-function buildCustomPalette(): PaletteDefinition {
+function buildCustomPalette(mode: Mode): PaletteDefinition {
   return {
     id: 'custom',
+    // Custom palettes made from contrast roles ramps save that mode's colors.
+    remapColors: (colors) => colorsToMode(colors, mode),
     getColorForValue: (
       value,
       params: {
@@ -216,18 +219,6 @@ function buildCustomPalette(): PaletteDefinition {
 export const buildPalettes = (theme: CoreTheme): Record<string, PaletteDefinition> => {
   const kbnPalettes = getKbnPalettes(theme);
   const defaultPalette = kbnPalettes.get(KbnPalette.Default);
-  // Contrast roles faint gradients; only in themes that list them.
-  const faintGradients = [
-    KbnPalette.CoolFaint,
-    KbnPalette.RedFaint,
-    KbnPalette.TemperatureFaint,
-    KbnPalette.GreenFaint,
-    KbnPalette.ComplementaryFaint,
-    KbnPalette.StatusFaint,
-  ].flatMap((id) => {
-    const palette = kbnPalettes.query(id);
-    return palette ? [[id, buildGradient(id, palette)] as const] : [];
-  });
   return {
     default: {
       title: defaultPalette.name,
@@ -254,7 +245,16 @@ export const buildPalettes = (theme: CoreTheme): Record<string, PaletteDefinitio
     cool: buildGradient('cool', kbnPalettes.get('cool')),
     warm: buildGradient('warm', kbnPalettes.get('warm')),
     gray: buildGradient('gray', kbnPalettes.get('gray')),
-    ...Object.fromEntries(faintGradients),
+    ...Object.fromEntries(
+      [
+        KbnPalette.ThemeAwareTemperature,
+        KbnPalette.ThemeAwareComplementary,
+        KbnPalette.ThemeAwareRed,
+        KbnPalette.ThemeAwareGreen,
+        KbnPalette.ThemeAwareCool,
+        KbnPalette.ThemeAwareWarm,
+      ].map((id) => [id, buildGradient(id, kbnPalettes.get(id))])
+    ),
     [COMPATIBILITY_PALETTE_ID]: {
       title: i18n.translate('charts.palettes.kibanaPaletteLabel', {
         defaultMessage: 'Compatibility',
@@ -264,6 +264,6 @@ export const buildPalettes = (theme: CoreTheme): Record<string, PaletteDefinitio
         createLegacyColorPalette(20)
       ),
     },
-    custom: buildCustomPalette(),
+    custom: buildCustomPalette(theme.darkMode ? 'dark' : 'light'),
   };
 };

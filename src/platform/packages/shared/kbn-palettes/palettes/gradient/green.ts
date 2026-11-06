@@ -9,20 +9,17 @@
 
 import { i18n } from '@kbn/i18n';
 import { euiPaletteGreen } from '@elastic/eui';
+import { KbnColorFnPalette } from '../../classes/color_fn_palette';
 import { KbnPalette } from '../../constants';
-import { withContrastRoles } from '../contrast_roles';
 
-export const getGreenPalette = withContrastRoles(
-  {
-    id: KbnPalette.Green,
-    aliases: [
-      'positive', // used in legacy chart palette service
-    ],
-    type: 'gradient',
-    name: i18n.translate('palettes.green.name', {
-      defaultMessage: 'Positive',
-    }),
-  },
-  ({ positive }) => positive,
-  euiPaletteGreen
-);
+export const greenPalette = new KbnColorFnPalette({
+  id: KbnPalette.Green,
+  aliases: [
+    'positive', // used in legacy chart palette service
+  ],
+  type: 'gradient',
+  name: i18n.translate('palettes.green.name', {
+    defaultMessage: 'Positive',
+  }),
+  colorFn: euiPaletteGreen,
+});

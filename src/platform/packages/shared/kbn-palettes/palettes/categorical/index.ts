@@ -11,4 +11,5 @@ export * from './neutral';
 export * from './elastic';
 export * from './elastic_line_optimized';
 export * from './elastic_faint';
+export * from './contrast_roles';
 export * from './severity';

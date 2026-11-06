@@ -300,9 +300,12 @@ export function getColorStops(
   activePalette: PaletteOutput<CustomPaletteParams>,
   dataBounds: DataBounds
 ) {
-  // just forward the current stops if custom
+  // just forward the current stops if custom, mapped to the current theme where the palette knows how
   if (activePalette?.name === CUSTOM_PALETTE && colorStops?.length) {
-    return colorStops;
+    const remap = palettes.get(CUSTOM_PALETTE)?.remapColors;
+    if (!remap) return colorStops;
+    const colors = remap(colorStops.map(({ color }) => color));
+    return colorStops.map((colorStop, i) => ({ ...colorStop, color: colors[i] }));
   }
   // for predefined palettes create some stops, then drop the last one.
   // we're using these as starting point for the user

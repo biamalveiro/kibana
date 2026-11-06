@@ -25,12 +25,6 @@ export const paletteIds: SystemPaletteId[] = [
   'cool',
   'warm',
   'gray',
-  'cool_faint',
-  'red_faint',
-  'temperature_faint',
-  'green_faint',
-  'complementary_faint',
-  'status_faint',
 ];
 
 // This set of defaults originated in Canvas, which, at present, is the primary

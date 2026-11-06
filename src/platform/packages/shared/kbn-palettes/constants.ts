@@ -33,9 +33,21 @@ const categorical = {
    */
   ElasticLineOptimized: 'elastic_line_optimized' as const,
   /**
-   * Contrast roles faint per hue: fills behind text, such as table cells and metric backgrounds.
+   * Contrast roles faint per hue: fills behind text, such as table cells.
    */
   ElasticFaint: 'elastic_faint' as const,
+  /**
+   * Contrast roles base and muted per hue, light mode's colors in both modes.
+   */
+  Revised: 'revised' as const,
+  /**
+   * Contrast roles base and muted per hue on each mode's surface, with muted past base.
+   */
+  HighContrast: 'high_contrast' as const,
+  /**
+   * Contrast roles base and muted per hue on each mode's surface.
+   */
+  LowContrast: 'low_contrast' as const,
   /**
    * Neutral palette
    */
@@ -70,14 +82,25 @@ const gradient = {
   Complementary: 'complementary' as const,
   Status: 'status' as const,
   CompareTo: 'compare_to' as const,
-  // Contrast roles faint gradients: fills behind text, such as metric backgrounds.
-  CoolFaint: 'cool_faint' as const,
-  RedFaint: 'red_faint' as const,
-  TemperatureFaint: 'temperature_faint' as const,
-  GreenFaint: 'green_faint' as const,
-  ComplementaryFaint: 'complementary_faint' as const,
-  StatusFaint: 'status_faint' as const,
+
+  // Contrast roles ramps on each mode's surface.
+  ThemeAwareCool: 'theme_aware_cool' as const,
+  ThemeAwareWarm: 'theme_aware_warm' as const,
+  ThemeAwareRed: 'theme_aware_red' as const,
+  ThemeAwareGreen: 'theme_aware_green' as const,
+  ThemeAwareTemperature: 'theme_aware_temperature' as const,
+  ThemeAwareComplementary: 'theme_aware_complementary' as const,
 };
+
+/**
+ * Categorical palettes built from contrast roles, whose colors map to a hue's roles.
+ */
+export const CONTRAST_ROLES_CATEGORICAL_PALETTES: readonly string[] = [
+  categorical.Revised,
+  categorical.HighContrast,
+  categorical.LowContrast,
+  categorical.ElasticFaint,
+];
 
 /**
  * Enum of all kbn palette ids, including by type

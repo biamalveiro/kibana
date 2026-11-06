@@ -18,7 +18,7 @@ export function useKbnPalettes() {
     euiTheme: { themeName },
     colorMode,
   } = useEuiTheme();
-  // Re-render when the contrast roles switch or its parameters change.
+  // Re-render when the contrast roles parameters change.
   useObservable(contrastRolesStore.state$, contrastRolesStore.get());
 
   if (themeName === 'EUI_THEME_BOREALIS') {

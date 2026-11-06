@@ -10,64 +10,70 @@
 import { contrastRolesStore, type ContrastRolesState } from '@kbn/contrast-roles';
 import { KbnPalettes } from '../classes/palettes';
 import {
-  getElasticPalette,
-  getElasticLineOptimizedPalette,
+  elasticPalette,
+  elasticLineOptimizedPalette,
   getElasticFaintPalette,
+  getHighContrastPalette,
+  getLowContrastPalette,
   getNeutralPalette,
+  revisedPalette,
   severityPalette,
 } from './categorical';
 import { elasticClassicPalette, kibana4Palette, kibana7Palette } from './legacy/categorical';
 import {
   compareToPalette,
-  getComplementaryFaintPalette,
-  getComplementaryPalette,
-  getCoolFaintPalette,
-  getCoolPalette,
-  getGreenFaintPalette,
-  getGreenPalette,
-  getRedFaintPalette,
-  getRedPalette,
-  getStatusFaintPalette,
-  getTemperatureFaintPalette,
-  getTemperaturePalette,
-  getWarmPalette,
+  complementaryPalette,
+  coolPalette,
+  getThemeAwareComplementaryPalette,
+  getThemeAwareCoolPalette,
+  getThemeAwareGreenPalette,
+  getThemeAwareRedPalette,
+  getThemeAwareTemperaturePalette,
+  getThemeAwareWarmPalette,
   grayPalette,
+  greenPalette,
+  redPalette,
   statusPalette,
+  temperaturePalette,
+  warmPalette,
 } from './gradient';
 export { logLevelPalette } from './semantic';
 
 const buildKbnPalettes = (darkMode: boolean) =>
   new KbnPalettes(
     [
-      getElasticPalette(darkMode),
-      getElasticLineOptimizedPalette(darkMode),
+      elasticPalette,
+      elasticLineOptimizedPalette,
+      revisedPalette,
+      getHighContrastPalette(darkMode),
+      getLowContrastPalette(darkMode),
       getElasticFaintPalette(darkMode),
       severityPalette,
       kibana7Palette,
       kibana4Palette,
       getNeutralPalette(darkMode),
-      getComplementaryPalette(darkMode),
-      getCoolPalette(darkMode),
+      complementaryPalette,
+      coolPalette,
       grayPalette,
-      getGreenPalette(darkMode),
-      getRedPalette(darkMode),
+      greenPalette,
+      redPalette,
       statusPalette,
-      getTemperaturePalette(darkMode),
-      getWarmPalette(darkMode),
+      temperaturePalette,
+      warmPalette,
+      getThemeAwareComplementaryPalette(darkMode),
+      getThemeAwareCoolPalette(darkMode),
+      getThemeAwareGreenPalette(darkMode),
+      getThemeAwareRedPalette(darkMode),
+      getThemeAwareTemperaturePalette(darkMode),
+      getThemeAwareWarmPalette(darkMode),
       elasticClassicPalette,
       compareToPalette,
-      getCoolFaintPalette(darkMode),
-      getRedFaintPalette(darkMode),
-      getTemperatureFaintPalette(darkMode),
-      getGreenFaintPalette(darkMode),
-      getComplementaryFaintPalette(darkMode),
-      getStatusFaintPalette(darkMode),
     ],
-    getElasticPalette(darkMode)
+    elasticPalette
   );
 
-// A new registry per contrast roles state, so consumers memoized on it recompute when the switch or its parameters
-// change; the palettes inside read the state when called.
+// A new registry per contrast roles state, so consumers memoized on it recompute when its parameters change; the
+// palettes inside read the state when called.
 let cached: { state: ContrastRolesState; light: KbnPalettes; dark: KbnPalettes } | undefined;
 
 export const getPalettes = (darkMode: boolean): KbnPalettes => {

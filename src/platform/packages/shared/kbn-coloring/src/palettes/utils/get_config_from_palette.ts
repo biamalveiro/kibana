@@ -19,6 +19,10 @@ const singleColorGradientPalettes = new Set<KbnPaletteId>([
   KbnPalette.Cool,
   KbnPalette.Warm,
   KbnPalette.Gray,
+  KbnPalette.ThemeAwareRed,
+  KbnPalette.ThemeAwareGreen,
+  KbnPalette.ThemeAwareCool,
+  KbnPalette.ThemeAwareWarm,
 ]);
 
 /**

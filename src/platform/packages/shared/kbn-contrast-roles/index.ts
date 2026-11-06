@@ -10,5 +10,22 @@
 export type { Hex, Params, Role, RoleColors } from './src';
 export { DEFAULT_PARAMS, ROLES } from './src';
 export { BOREALIS_THEME, SURFACES, borealis, type Mode } from './borealis';
-export { DEFAULT_STATE, contrastRolesStore, type ContrastRolesState } from './store';
-export { themeAware, type ThemeAwarePalettes } from './palettes';
+export {
+  DEFAULT_STATE,
+  contrastRolesStore,
+  highContrastParams,
+  type ContrastRolesState,
+} from './store';
+export {
+  CATEGORICAL_COUNTS,
+  categoricalForTable,
+  colorsToMode,
+  isContrastRolesRamp,
+  rampForTable,
+  revised,
+  roleFor,
+  themeAware,
+  toMode,
+  type TableColorUse,
+  type ThemeAwarePalettes,
+} from './palettes';

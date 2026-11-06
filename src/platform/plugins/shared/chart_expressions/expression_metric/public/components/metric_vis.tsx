@@ -34,6 +34,7 @@ import type {
 import type { TextContextTypeConvert } from '@kbn/field-formats-plugin/common';
 
 import { resolveVisIcon } from '@kbn/chart-icons';
+import { toMode } from '@kbn/contrast-roles';
 import { DEFAULT_TRENDLINE_NAME } from '../../common/constants';
 import type { MetricVisParam, VisParams } from '../../common';
 import { getThemeService, getFormatService } from '../services';
@@ -126,9 +127,13 @@ export const MetricVis = ({
   const grid = useRef<MetricSpec['data']>([[]]);
   const {
     euiTheme: { colors },
+    colorMode,
     highContrastMode,
   } = useEuiTheme();
   const defaultColor = colors.emptyShade;
+  // A saved contrast roles color, such as a faint background, follows the theme.
+  const staticColor =
+    config.metric.color && toMode(config.metric.color, colorMode === 'DARK' ? 'dark' : 'light');
 
   const onRenderChange = useCallback<RenderChangeListener>(
     (isRendered) => {
@@ -226,7 +231,7 @@ export const MetricVis = ({
           ) ?? defaultColor
         : undefined;
 
-    const tileColor = paletteColor ?? config.metric.color ?? defaultColor;
+    const tileColor = paletteColor ?? staticColor ?? defaultColor;
 
     let secondaryMetricProps: SecondaryMetricProps | undefined;
     const { secondaryMetric } = config.dimensions;
@@ -264,7 +269,7 @@ export const MetricVis = ({
         subtitle,
         icon: config.metric?.icon ? getIcon(config.metric?.icon) : undefined,
         extra: secondaryMetricProps,
-        color: config.metric.applyColorTo ? config.metric.color ?? defaultColor : defaultColor,
+        color: config.metric.applyColorTo ? staticColor ?? defaultColor : defaultColor,
       };
       return Array.isArray(value)
         ? { ...nonNumericMetricBase, value: value.map((v) => formatPrimaryMetric(v)) }

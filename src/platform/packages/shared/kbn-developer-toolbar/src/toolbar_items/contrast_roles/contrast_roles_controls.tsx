@@ -10,7 +10,6 @@
 import React, { useState } from 'react';
 import { css } from '@emotion/react';
 import {
-  EuiBadge,
   EuiButtonEmpty,
   EuiButtonGroup,
   EuiButtonIcon,
@@ -25,7 +24,12 @@ import {
   EuiToolTip,
 } from '@elastic/eui';
 import useObservable from 'react-use/lib/useObservable';
-import { DEFAULT_PARAMS, contrastRolesStore, type Params } from '@kbn/contrast-roles';
+import {
+  DEFAULT_STATE,
+  contrastRolesStore,
+  type ContrastRolesState,
+  type Params,
+} from '@kbn/contrast-roles';
 
 type Group = keyof Params;
 type NumericKey<G extends Group> = {
@@ -53,12 +57,14 @@ interface ParamGroup {
   title: string;
   toggle?: Toggle;
   sliders: Slider[];
+  /** Also shows High contrast's muted target, which lives outside `Params`. */
+  highContrastMuted?: boolean;
 }
 
 const anchored = ({ base }: Params) => base.from === 'anchor';
 const even = ({ chroma }: Params) => chroma.mode === 'even';
 
-// The workbench's parameter groups and ranges (vis-color-workbench src/lib/workbench.ts), without Reverse.
+// The workbench's parameter groups and ranges (vis-color-workbench src/lib/workbench.ts).
 const PARAM_GROUPS: ParamGroup[] = [
   {
     title: 'Faint · fill',
@@ -67,6 +73,7 @@ const PARAM_GROUPS: ParamGroup[] = [
   {
     title: 'Muted · stack second tier',
     sliders: [{ path: ['lc', 'muted'], label: 'Lc on surface', min: 8, max: 50 }],
+    highContrastMuted: true,
   },
   {
     title: 'Base · mark',
@@ -104,7 +111,7 @@ const PARAM_GROUPS: ParamGroup[] = [
     ],
   },
   {
-    title: 'Strong · lines 7-12',
+    title: 'Strong · table text',
     sliders: [{ path: ['lc', 'strong'], label: 'Lc on surface', min: 50, max: 100 }],
   },
   {
@@ -169,11 +176,13 @@ const panelStyles = css`
   overflow-y: auto;
 `;
 
-const ParamsPanel = ({ params }: { params: Params }) => {
+const HIGH_CONTRAST_MUTED = { label: 'High contrast muted, Lc on surface', min: 50, max: 100 };
+
+const ParamsPanel = ({ state: { params, highContrast } }: { state: ContrastRolesState }) => {
   const update = (next: Params) => contrastRolesStore.set({ params: next });
   return (
     <div css={panelStyles}>
-      {PARAM_GROUPS.map(({ title, toggle, sliders }) => (
+      {PARAM_GROUPS.map(({ title, toggle, sliders, highContrastMuted }) => (
         <React.Fragment key={title}>
           <EuiTitle size="xxs">
             <h4>{title}</h4>
@@ -212,6 +221,21 @@ const ParamsPanel = ({ params }: { params: Params }) => {
               />
             </EuiFormRow>
           ))}
+          {highContrastMuted && (
+            <EuiFormRow label={HIGH_CONTRAST_MUTED.label} display="rowCompressed">
+              <EuiRange
+                compressed
+                min={HIGH_CONTRAST_MUTED.min}
+                max={HIGH_CONTRAST_MUTED.max}
+                step={1}
+                value={highContrast.muted}
+                showInput
+                onChange={({ currentTarget }) =>
+                  contrastRolesStore.set({ highContrast: { muted: Number(currentTarget.value) } })
+                }
+              />
+            </EuiFormRow>
+          )}
           <EuiSpacer size="m" />
         </React.Fragment>
       ))}
@@ -219,26 +243,13 @@ const ParamsPanel = ({ params }: { params: Params }) => {
   );
 };
 
-/** Developer toolbar item: the contrast roles before/after switch and its parameters. */
+/** Developer toolbar item: the contrast roles parameters, for the contrast roles palettes. */
 export const ContrastRolesControls = () => {
-  const { enabled, params } = useObservable(contrastRolesStore.state$, contrastRolesStore.get());
+  const state = useObservable(contrastRolesStore.state$, contrastRolesStore.get());
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <EuiFlexGroup gutterSize="xs" alignItems="center" responsive={false}>
-      <EuiFlexItem grow={false}>
-        <EuiToolTip content="Click to switch chart colors between contrast roles and EUI's palettes.">
-          <EuiBadge
-            color={enabled ? 'success' : 'default'}
-            iconType="palette"
-            iconSide="left"
-            onClick={() => contrastRolesStore.set({ enabled: !enabled })}
-            onClickAriaLabel="Toggle contrast roles"
-          >
-            {enabled ? 'Contrast roles' : 'EUI colors'}
-          </EuiBadge>
-        </EuiToolTip>
-      </EuiFlexItem>
       <EuiFlexItem grow={false}>
         <EuiPopover
           aria-label={PARAMS_TITLE}
@@ -261,16 +272,13 @@ export const ContrastRolesControls = () => {
             <EuiFlexGroup justifyContent="spaceBetween" alignItems="center" responsive={false}>
               <EuiFlexItem grow={false}>{PARAMS_TITLE}</EuiFlexItem>
               <EuiFlexItem grow={false}>
-                <EuiButtonEmpty
-                  size="xs"
-                  onClick={() => contrastRolesStore.set({ params: DEFAULT_PARAMS })}
-                >
+                <EuiButtonEmpty size="xs" onClick={() => contrastRolesStore.set(DEFAULT_STATE)}>
                   Reset to defaults
                 </EuiButtonEmpty>
               </EuiFlexItem>
             </EuiFlexGroup>
           </EuiPopoverTitle>
-          <ParamsPanel params={params} />
+          <ParamsPanel state={state} />
         </EuiPopover>
       </EuiFlexItem>
     </EuiFlexGroup>

@@ -25,7 +25,6 @@
     "@kbn/ui-theme",
     "@kbn/visualization-utils",
     "@kbn/palettes",
-    "@kbn/contrast-roles",
     "@kbn/field-formats-plugin",
     "@kbn/field-formats-common",
     "@kbn/expressions-plugin",

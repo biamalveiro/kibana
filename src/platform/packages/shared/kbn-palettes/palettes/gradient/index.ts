@@ -16,4 +16,4 @@ export * from './temperature';
 export * from './complementary';
 export * from './status';
 export * from './compare_to';
-export * from './faint';
+export * from './contrast_roles';

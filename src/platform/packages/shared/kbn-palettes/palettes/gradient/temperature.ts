@@ -9,17 +9,14 @@
 
 import { i18n } from '@kbn/i18n';
 import { euiPaletteForTemperature } from '@elastic/eui';
+import { KbnColorFnPalette } from '../../classes/color_fn_palette';
 import { KbnPalette } from '../../constants';
-import { withContrastRoles } from '../contrast_roles';
 
-export const getTemperaturePalette = withContrastRoles(
-  {
-    id: KbnPalette.Temperature,
-    type: 'gradient',
-    name: i18n.translate('palettes.temperature.name', {
-      defaultMessage: 'Temperature',
-    }),
-  },
-  ({ temperature }) => temperature,
-  euiPaletteForTemperature
-);
+export const temperaturePalette = new KbnColorFnPalette({
+  id: KbnPalette.Temperature,
+  type: 'gradient',
+  name: i18n.translate('palettes.temperature.name', {
+    defaultMessage: 'Temperature',
+  }),
+  colorFn: euiPaletteForTemperature,
+});

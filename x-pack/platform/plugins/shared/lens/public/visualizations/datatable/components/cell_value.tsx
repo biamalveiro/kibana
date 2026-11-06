@@ -179,14 +179,15 @@ export const createGridCell = (
       };
     }, [renderMode, fillStyle, rawValue, minMaxByColumnId, columnId, palette, formatter]);
 
-    const badgeColor = useMemo(() => {
+    const badge = useMemo(() => {
       if (renderMode !== 'badge') return null;
       if (isEmptyValue(rawValue)) return null;
       // Always delegate to getCellColor: when no palette/colorMapping is configured
       // (e.g. via the as-code Lens API) the factory resolves sensible defaults so badges
       // are colored automatically, mirroring the cell/text coloring behavior.
-      const color = getCellColor(columnId, palette, colorMapping)(rawValue);
-      return color || null;
+      const colorFn = getCellColor(columnId, palette, colorMapping);
+      const color = colorFn(rawValue);
+      return color ? { color, contrastRoles: colorFn.contrastRoles } : null;
     }, [renderMode, columnId, palette, colorMapping, rawValue]);
 
     useEffect(() => {
@@ -220,7 +221,8 @@ export const createGridCell = (
         return (
           <BadgeCell
             label={formatter?.convertToText(rawValue) ?? fallbackText}
-            badgeColor={badgeColor}
+            badgeColor={badge?.color ?? null}
+            contrastRoles={badge?.contrastRoles}
             isClickable={isClickable}
             onClick={onFilter}
             isDarkMode={isDarkMode}
@@ -267,10 +269,7 @@ export const createGridCell = (
           formatter && isMissingValue(rawValue)
             ? formatter.convertToReact(rawValue)
             : formatter?.convertToText(rawValue) ?? fallbackText;
-        const backgroundColor =
-          colorMode === 'cell' && !isEmptyValue(rawValue)
-            ? getCellColor(columnId, palette, colorMapping)(rawValue)
-            : null;
+        const backgroundColor = colorMode === 'cell' ? cellStyle?.backgroundColor : undefined;
         // Only override EuiLink color when the cell background is colored (colorMode: cell).
         const linkColor =
           colorMode === 'cell' && backgroundColor

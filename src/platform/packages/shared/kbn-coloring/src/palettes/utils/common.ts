@@ -221,6 +221,11 @@ export function applyPaletteParams<T extends PaletteOutput<CustomPaletteParams>>
   if (activePalette?.params?.reverse && activePalette?.params?.name !== CUSTOM_PALETTE) {
     return reversePalette(displayStops);
   }
+  const remap = activePalette?.name === CUSTOM_PALETTE && palettes.get(CUSTOM_PALETTE)?.remapColors;
+  if (remap) {
+    const colors = remap(displayStops.map(({ color }) => color));
+    return displayStops.map((stop, i) => ({ ...stop, color: colors[i] }));
+  }
   return displayStops;
 }
 
@@ -239,9 +244,11 @@ export function getOverridePaletteColors<T extends PaletteOutput<CustomPalettePa
   paletteService: PaletteRegistry,
   activePalette?: T
 ): string[] | undefined {
-  // Custom palettes keep their user-defined colors.
+  // Custom palettes keep their user-defined colors, mapped to the current theme where the palette knows how.
   if (!activePalette || activePalette.name === CUSTOM_PALETTE) {
-    return activePalette?.params?.stops?.map(({ color }) => color);
+    const colors = activePalette?.params?.stops?.map(({ color }) => color);
+    const remap = colors && paletteService.get(CUSTOM_PALETTE)?.remapColors;
+    return remap ? remap(colors) : colors;
   }
 
   const { steps, stops, ...otherParams } = activePalette.params ?? {};

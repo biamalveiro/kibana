@@ -22,14 +22,14 @@ export interface KbnColorFnPaletteConfig extends Optional<KbnBasePaletteConfig, 
    *
    * @default `colorCount`
    */
-  defaultNumberOfColors?: number | (() => number);
+  defaultNumberOfColors?: number;
 }
 
 export class KbnColorFnPalette extends KbnBasePalette implements IKbnPalette {
   public readonly type: KbnPaletteType;
 
   #colorFn: (n: number) => string[];
-  #defaultNumberOfColors?: number | (() => number);
+  #defaultNumberOfColors: number;
 
   constructor({
     type,
@@ -43,16 +43,10 @@ export class KbnColorFnPalette extends KbnBasePalette implements IKbnPalette {
     this.type = type;
 
     this.#colorFn = colorFn;
-    this.#defaultNumberOfColors = defaultNumberOfColors;
+    this.#defaultNumberOfColors = defaultNumberOfColors ?? colorCount;
   }
 
-  public colors = (n: number = this.#getDefaultNumberOfColors()) => {
+  public colors = (n: number = this.#defaultNumberOfColors) => {
     return this.#colorFn(n === undefined ? n : Math.max(1, n));
-  };
-
-  #getDefaultNumberOfColors = (): number => {
-    const value = this.#defaultNumberOfColors;
-    if (value === undefined) return this.colorCount;
-    return typeof value === 'function' ? value() : value;
   };
 }

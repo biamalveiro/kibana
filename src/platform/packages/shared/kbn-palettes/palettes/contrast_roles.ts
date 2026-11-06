@@ -7,31 +7,18 @@
  * License v3.0 only", or the "Server Side Public License, v 1".
  */
 
-import {
-  contrastRolesStore,
-  themeAware,
-  type Mode,
-  type ThemeAwarePalettes,
-} from '@kbn/contrast-roles';
+import { themeAware, type Mode, type ThemeAwarePalettes } from '@kbn/contrast-roles';
 import { KbnColorFnPalette, type KbnColorFnPaletteConfig } from '../classes/color_fn_palette';
 
 type ColorFn = (n: number) => string[];
 
-/**
- * A palette per mode with contrast roles colors. With `euiColors`, those are used instead while the switch is off;
- * without, the palette has no EUI counterpart and always uses contrast roles.
- */
+/** A palette per mode with contrast roles colors on that mode's surface. */
 export const withContrastRoles = (
   config: Omit<KbnColorFnPaletteConfig, 'colorFn'>,
-  pick: (palettes: ThemeAwarePalettes) => ColorFn,
-  euiColors?: ColorFn
+  pick: (palettes: ThemeAwarePalettes) => ColorFn
 ): ((darkMode: boolean) => KbnColorFnPalette) => {
   const build = (mode: Mode) =>
-    new KbnColorFnPalette({
-      ...config,
-      colorFn: (n) =>
-        euiColors && !contrastRolesStore.get().enabled ? euiColors(n) : pick(themeAware(mode))(n),
-    });
+    new KbnColorFnPalette({ ...config, colorFn: (n) => pick(themeAware(mode))(n) });
   const light = build('light');
   const dark = build('dark');
   return (darkMode) => (darkMode ? dark : light);

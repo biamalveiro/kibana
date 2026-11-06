@@ -7,8 +7,7 @@
  * License v3.0 only", or the "Server Side Public License, v 1".
  */
 
-// Contrast roles: the public API. Portable: no React, no EUI. Give it a theme (two surfaces and the hues) and
-// parameters; get palettes per surface. Dependencies: culori, colorjs.io.
+// Contrast roles public API. No React, no EUI.
 export type {
   BaseColor,
   Color,
@@ -25,7 +24,7 @@ export type {
 export { ROLES } from './types';
 export { DEFAULT_PARAMS } from './defaults';
 export { createContrastRoles, type ContrastRoles } from './contrast_roles';
-export { cuspOffset } from './hue_correction';
+export { cuspOffset } from './corrections';
 export {
   apcaLc,
   contrast,
@@ -37,5 +36,4 @@ export {
   shell,
   SHELL_STEPS,
 } from './color';
-export { NON_TEXT, requiredLc, type ElementKind } from './checks/non_text_widths';
-export { pairDifference } from './checks/pair_difference';
+export { NON_TEXT, pairDifference, requiredLc, type ElementKind } from './checks';

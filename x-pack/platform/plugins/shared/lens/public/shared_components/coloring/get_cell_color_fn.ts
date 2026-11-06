@@ -8,11 +8,24 @@
 import type { ColorMappingInputData, PaletteOutput, PaletteRegistry } from '@kbn/coloring';
 import { getSpecialString, getValueKey } from '@kbn/coloring';
 import type { CustomPaletteState } from '@kbn/charts-plugin/common';
-import type { KbnPalettes } from '@kbn/palettes';
+import { CONTRAST_ROLES_CATEGORICAL_PALETTES, type KbnPalettes } from '@kbn/palettes';
+import { isContrastRolesRamp } from '@kbn/contrast-roles';
 import type { RawValue } from '@kbn/data-plugin/common';
 import { getColorAccessorFn } from './color_mapping_accessor';
 
-export type CellColorFn = (value: RawValue) => string | null;
+/** How a column's contrast roles colors map to a table's roles: by hue, or by hue and position along a ramp. */
+export type ContrastRolesColoring = 'categorical' | 'ramp';
+
+export interface CellColorFn {
+  (value: RawValue): string | null;
+  /** Set when the column's colors come from a contrast roles palette. */
+  contrastRoles?: ContrastRolesColoring;
+}
+
+const isContrastRolesColorMapping = (colorMapping: string): boolean => {
+  const { paletteId } = JSON.parse(colorMapping) as { paletteId?: string };
+  return paletteId !== undefined && CONTRAST_ROLES_CATEGORICAL_PALETTES.includes(paletteId);
+};
 
 export function getCellColorFn(
   paletteService: PaletteRegistry,
@@ -25,18 +38,22 @@ export function getCellColorFn(
   colorMapping?: string
 ): CellColorFn {
   if (!colorByTerms && palette && data.type === 'ranges') {
-    return (value) => {
+    const colorFn: CellColorFn = (value) => {
       if (value === null || value === undefined || typeof value !== 'number') return null;
 
       return (
         paletteService.get(palette.name).getColorForValue?.(value, palette.params, data) ?? null
       );
     };
+    if (isContrastRolesRamp(palette.params?.colors ?? [])) colorFn.contrastRoles = 'ramp';
+    return colorFn;
   }
 
   if (colorByTerms && data.type === 'categories') {
     if (colorMapping) {
-      return getColorAccessorFn(palettes, colorMapping, data, isDarkMode);
+      const colorFn: CellColorFn = getColorAccessorFn(palettes, colorMapping, data, isDarkMode);
+      if (isContrastRolesColorMapping(colorMapping)) colorFn.contrastRoles = 'categorical';
+      return colorFn;
     } else if (palette) {
       return (value: RawValue) => {
         if (value === undefined || value === null) return null;

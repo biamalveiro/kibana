@@ -8,25 +8,19 @@
  */
 
 import { i18n } from '@kbn/i18n';
-import { themeAware, type Mode } from '@kbn/contrast-roles';
-import { KbnColorFnPalette } from '../../classes/color_fn_palette';
+import { CATEGORICAL_COUNTS } from '@kbn/contrast-roles';
 import { KbnPalette } from '../../constants';
+import { withContrastRoles } from '../contrast_roles';
 
-const build = (mode: Mode) =>
-  new KbnColorFnPalette({
+/** Faint per hue, for fills behind text such as table cells. Contrast roles only. */
+export const getElasticFaintPalette = withContrastRoles(
+  {
     id: KbnPalette.ElasticFaint,
     type: 'categorical',
-    aliases: [],
     name: i18n.translate('palettes.elasticFaint.name', {
       defaultMessage: 'Elastic (faint)',
     }),
-    colorCount: () => themeAware(mode).counts.elasticFaint,
-    colorFn: (n) => themeAware(mode).elasticFaint(n),
-  });
-
-const lightElasticFaintPalette = build('light');
-const darkElasticFaintPalette = build('dark');
-
-/** Faint per hue, for fills behind text such as table cells and metric backgrounds. Contrast roles only. */
-export const getElasticFaintPalette = (darkMode: boolean) =>
-  darkMode ? darkElasticFaintPalette : lightElasticFaintPalette;
+    colorCount: CATEGORICAL_COUNTS.faint,
+  },
+  ({ elasticFaint }) => elasticFaint
+);

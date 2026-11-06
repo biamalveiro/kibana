@@ -7,20 +7,17 @@
  * License v3.0 only", or the "Server Side Public License, v 1".
  */
 
-// Find the lightness where a hue reaches a contrast target, as apcach does: keep the hue, let chroma follow its rule,
-// and bisect lightness from the background toward the far end until |Lc| hits the target.
 import { apcaLc, oklchToHex } from './color';
 import type { Hex } from './types';
 
-// Solved lightness stays a little off pure black and white, where a color loses its hue.
 const L_MIN = 0.03;
 const L_MAX = 0.985;
 export const clampL = (L: number) => Math.min(L_MAX, Math.max(L_MIN, L));
 
-const ITERATIONS = 30; // halves the interval to ~1e-9 of the background-to-end distance
+const ITERATIONS = 30;
 const CACHE_LIMIT = 20000;
 
-export interface LightnessQuery {
+interface LightnessQuery {
   angle: number; // hue
   hueAt?: (L: number) => number; // the hue at each candidate lightness, when it turns with lightness
   target: number; // |Lc| to reach
@@ -31,7 +28,7 @@ export interface LightnessQuery {
   key: string; // identifies chromaAt for the cache
 }
 
-// A solver with its own cache. Contrast grows monotonically from `from` to `to`, so bisection is enough.
+// Contrast grows monotonically from `from` to `to`.
 export function createSolver() {
   const cache = new Map<string, number>();
   return function solveLightness({

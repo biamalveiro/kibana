@@ -48,14 +48,16 @@ function getCustomPaletteConfig(
   }
 
   // full custom palette
+  const colors = (activePalette.params.colorStops || activePalette.params.stops).map(
+    (colorStop) => colorStop.color
+  );
+  const { remapColors } = palettes.get(CUSTOM_PALETTE);
   return {
     value: id,
     title,
     type: FIXED_PROGRESSION,
     'data-test-subj': `custom-palette`,
-    palette: (activePalette.params.colorStops || activePalette.params.stops).map(
-      (colorStop) => colorStop.color
-    ),
+    palette: remapColors ? remapColors(colors) : colors,
   };
 }
 
