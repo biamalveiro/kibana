@@ -12,12 +12,11 @@ import type { KbnPaletteId } from '@kbn/palettes';
 type SystemPaletteId = KbnPaletteId | 'kibana_palette' | 'custom' | 'negative' | 'positive';
 
 export const BRAND_PALETTE_SETTING = 'visualization:brandPalette';
-export const BRAND_CATEGORICAL_PALETTE_SETTING = 'visualization:brandPalette:categorical';
-export const BRAND_LINE_OPTIMIZED_PALETTE_SETTING = 'visualization:brandPalette:lineOptimized';
+export const BRAND_HUES_SETTING = 'visualization:brandHues';
 export const BRAND_LOGO_SETTING = 'visualization:brandLogo';
-export const MAX_BRAND_COLORS = 20;
-// Generated palettes hold a light tone for every brand color.
-export const MAX_BRAND_PALETTE_COLORS = MAX_BRAND_COLORS * 2;
+// Brand hue generation keeps at most six seeds, and makes six hues.
+export const MAX_BRAND_COLORS = 6;
+export const MAX_BRAND_HUES = 6;
 export const MAX_BRAND_LOGO_SIZE_IN_KB = 200;
 
 // Currently supported palettes. This list might be extended dynamically in a later release

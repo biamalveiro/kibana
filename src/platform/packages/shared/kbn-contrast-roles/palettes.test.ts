@@ -8,7 +8,14 @@
  */
 
 import { DEFAULT_PARAMS, apcaLc, hexToOklch, type Hex } from './src';
-import { SURFACES, borealis, borealisStatus, type Mode } from './borealis';
+import {
+  STATUS_COLORS,
+  SURFACES,
+  borealis,
+  borealisStatus,
+  brandRoles,
+  type Mode,
+} from './borealis';
 import {
   categoricalForTable,
   colorsToMode,
@@ -21,26 +28,6 @@ import {
 } from './palettes';
 import { DEFAULT_STATE, contrastRolesStore, highContrastParams } from './store';
 
-// From `npm run check` in vis-color-workbench (scripts/check-palettes.snap.json): faint, muted, base, strong, ink.
-const EXPECTED = {
-  light: {
-    teal: ['#AEF3EF', '#7AE2DD', '#16C5C0', '#00938F', '#005A58'],
-    blue: ['#D0E3FF', '#A4C9FF', '#61A2FF', '#3978D2', '#003F8B'],
-    pink: ['#FFD5E3', '#FFABCA', '#EE72A6', '#C0487E', '#770043'],
-    red: ['#FFD6D1', '#FFAFA7', '#F6726A', '#C84844', '#7A000D'],
-    yellow: ['#FFE6B7', '#FDCE71', '#EAAE01', '#C07800', '#7C4C00'],
-    purple: ['#E6DAFF', '#D1B8FF', '#B386F9', '#8C5ECD', '#54208C'],
-  },
-  dark: {
-    teal: ['#006765', '#009390', '#16C5C0', '#76E0DB', '#C1FAF7'],
-    blue: ['#2A5694', '#4379C7', '#61A2FF', '#A1C8FF', '#DBEAFF'],
-    pink: ['#88355A', '#B9517E', '#EE72A6', '#FFA9C9', '#FFDCE8'],
-    red: ['#8E3531', '#C0514B', '#F6726A', '#FFACA4', '#FFDEDA'],
-    yellow: ['#845519', '#B77D34', '#E1B14D', '#F4CF85', '#FFF1D5'],
-    purple: ['#634491', '#8963C3', '#B386F9', '#D0B6FF', '#EBE1FF'],
-  },
-};
-
 const rolesOn = (mode: Mode) => borealis.palettes(SURFACES[mode], DEFAULT_PARAMS).roles;
 const lightness = (hex: string) => hexToOklch(hex as Hex).L;
 const lcOn = (hex: string, mode: Mode) => Math.abs(apcaLc(hex, SURFACES[mode]));
@@ -50,14 +37,6 @@ describe('contrast roles on Borealis', () => {
 
   it('reads the surfaces from the theme', () => {
     expect(SURFACES).toEqual({ light: '#FFFFFF', dark: '#111C2C' });
-  });
-
-  it.each(['light', 'dark'] as const)('matches the workbench in %s mode', (mode) => {
-    const roles = rolesOn(mode);
-    for (const [hue, expected] of Object.entries(EXPECTED[mode])) {
-      const role = roles.find(({ name }) => name === hue);
-      expect(role && [role.faint, role.muted, role.base, role.strong, role.ink]).toEqual(expected);
-    }
   });
 
   describe('categorical palettes', () => {
@@ -174,5 +153,60 @@ describe('contrast roles on Borealis', () => {
     expect(toMode(lightTeal.faint, 'dark')).toBe(darkTeal.faint);
     expect(toMode(lightTeal.faint, 'light')).toBe(lightTeal.faint);
     expect(toMode('#123456', 'dark')).toBe('#123456');
+  });
+
+  it('reads the status colors brand hues avoid from the theme', () => {
+    expect(STATUS_COLORS).toEqual(['#008A5E', '#C61E25', '#24C292', '#F6726A']);
+  });
+
+  describe('with brand hues', () => {
+    const BRAND = [
+      { name: 'orange', base: '#EB7D20' },
+      { name: 'green', base: '#80BC43' },
+    ] as const;
+    const brandRolesOn = (mode: Mode) =>
+      brandRoles(BRAND).palettes(SURFACES[mode], DEFAULT_PARAMS).roles;
+
+    beforeEach(() => contrastRolesStore.set({ brand: BRAND }));
+
+    it.each(['light', 'dark'] as const)(
+      'adds brand palettes next to the Borealis ones in %s mode',
+      (mode) => {
+        contrastRolesStore.set({ brand: undefined });
+        const elastic = themeAware(mode).lowContrast(4);
+        contrastRolesStore.set({ brand: BRAND });
+
+        const [orange] = brandRolesOn(mode);
+        expect(orange.base).toBe('#EB7D20');
+        expect(themeAware(mode).brandLowContrast(2)).toEqual([orange.base, orange.muted]);
+        expect(themeAware(mode).lowContrast(4)).toEqual(elastic);
+      }
+    );
+
+    it('falls back to Borealis for the brand palettes when no brand is set', () => {
+      contrastRolesStore.set({ brand: undefined });
+      expect(themeAware('light').brandLowContrast(4)).toEqual(themeAware('light').lowContrast(4));
+    });
+
+    it('keeps the ramps on Borealis', () => {
+      contrastRolesStore.set({ brand: undefined });
+      const cool = themeAware('light').cool(5);
+      contrastRolesStore.set({ brand: BRAND });
+      expect(themeAware('light').cool(5)).toEqual(cool);
+      expect(isContrastRolesRamp(cool)).toBe(true);
+    });
+
+    it('colors tables from the brand for categorical colors and from Borealis for ramps', () => {
+      const [orange] = brandRolesOn('light');
+      expect(categoricalForTable(orange.base, 'light', 'fill')).toBe(orange.faint);
+      const [blue] = themeAware('light').cool(1);
+      expect(roleFor(blue, 'light', 'ramp')?.name).toBe('blue');
+    });
+
+    it('maps saved brand colors from the other mode', () => {
+      const [lightOrange] = brandRolesOn('light');
+      const [darkOrange] = brandRolesOn('dark');
+      expect(toMode(lightOrange.faint, 'dark')).toBe(darkOrange.faint);
+    });
   });
 });

@@ -18,6 +18,7 @@
     "@kbn/core-lifecycle-browser-mocks",
     "@kbn/palettes",
     "@kbn/contrast-roles",
+    "@kbn/brand-hues",
     "@kbn/config-schema",
     "@kbn/advanced-settings-plugin",
     "@kbn/management-settings-section-registry",

@@ -9,7 +9,6 @@
 
 import React, { useMemo, useState } from 'react';
 import {
-  EuiBadge,
   EuiButton,
   EuiButtonEmpty,
   EuiColorPaletteDisplay,
@@ -27,15 +26,13 @@ import {
 import { i18n } from '@kbn/i18n';
 import type { IUiSettingsClient } from '@kbn/core/public';
 import type { RegistryComponentProps } from '@kbn/management-settings-section-registry';
-import { generateBrandPalettes } from '@kbn/palettes';
+import { contrastRolesStore, type BrandHueInput } from '@kbn/contrast-roles';
 import {
-  BRAND_CATEGORICAL_PALETTE_SETTING,
-  BRAND_LINE_OPTIMIZED_PALETTE_SETTING,
+  BRAND_HUES_SETTING,
   BRAND_LOGO_SETTING,
   BRAND_PALETTE_SETTING,
   MAX_BRAND_COLORS,
   MAX_BRAND_LOGO_SIZE_IN_KB,
-  MAX_BRAND_PALETTE_COLORS,
 } from '../../common';
 import { ColorListEditor } from './color_list_editor';
 
@@ -45,8 +42,7 @@ export interface BrandSettingsSectionProps extends RegistryComponentProps {
 
 interface BrandSettings {
   brandColors: string[];
-  categorical: string[];
-  lineOptimized: string[];
+  hues: BrandHueInput[];
   logo: string | null;
 }
 
@@ -56,10 +52,37 @@ const supportedLogoTypes = ['image/svg+xml'];
 
 const readSettings = (globalClient: IUiSettingsClient): BrandSettings => ({
   brandColors: globalClient.get<string[]>(BRAND_PALETTE_SETTING, []),
-  categorical: globalClient.get<string[]>(BRAND_CATEGORICAL_PALETTE_SETTING, []),
-  lineOptimized: globalClient.get<string[]>(BRAND_LINE_OPTIMIZED_PALETTE_SETTING, []),
+  hues: globalClient.get<BrandHueInput[]>(BRAND_HUES_SETTING, []),
   logo: globalClient.get<string | null>(BRAND_LOGO_SETTING, null),
 });
+
+// The generator and its color naming data are large, so they load only when hues are generated.
+const generateHues = async (brandColors: string[]): Promise<BrandHueInput[]> => {
+  if (brandColors.length === 0) return [];
+  const { generateBrand } = await import('@kbn/brand-hues');
+  return generateBrand(brandColors, { params: contrastRolesStore.get().params }).hues;
+};
+
+const savedMessage = (hadPalette: boolean, hasPalette: boolean, colorsChanged: boolean) => {
+  if (!hadPalette && hasPalette) {
+    return i18n.translate('charts.brandSettings.paletteAdded', {
+      defaultMessage: 'Brand palette added',
+    });
+  }
+  if (hadPalette && !hasPalette) {
+    return i18n.translate('charts.brandSettings.paletteRemoved', {
+      defaultMessage: 'Brand palette removed',
+    });
+  }
+  if (hasPalette && colorsChanged) {
+    return i18n.translate('charts.brandSettings.paletteUpdated', {
+      defaultMessage: 'Brand palette updated',
+    });
+  }
+  return i18n.translate('charts.brandSettings.saved', {
+    defaultMessage: 'Brand settings saved',
+  });
+};
 
 const readFileAsDataUrl = (file: File) =>
   new Promise<string>((resolve, reject) => {
@@ -68,86 +91,6 @@ const readFileAsDataUrl = (file: File) =>
     reader.onerror = () => reject(reader.error);
     reader.readAsDataURL(file);
   });
-
-interface PaletteRowProps {
-  title: string;
-  description: string;
-  generated: readonly string[];
-  customized: string[];
-  onChange: (colors: string[]) => void;
-  disabled: boolean;
-}
-
-const PaletteRow = ({
-  title,
-  description,
-  generated,
-  customized,
-  onChange,
-  disabled,
-}: PaletteRowProps) => {
-  const isCustomized = customized.length > 0;
-  const colors = isCustomized ? customized : generated;
-
-  return (
-    <EuiDescribedFormGroup
-      fullWidth
-      title={
-        <h4>
-          {title}{' '}
-          <EuiBadge color={isCustomized ? 'primary' : 'hollow'}>
-            {isCustomized
-              ? i18n.translate('charts.brandSettings.customizedBadge', {
-                  defaultMessage: 'Customized',
-                })
-              : i18n.translate('charts.brandSettings.generatedBadge', {
-                  defaultMessage: 'Generated',
-                })}
-          </EuiBadge>
-        </h4>
-      }
-      description={description}
-    >
-      <EuiFormRow fullWidth>
-        <>
-          <EuiColorPaletteDisplay type="fixed" palette={[...colors]} size="m" />
-          <EuiSpacer size="s" />
-          {isCustomized ? (
-            <>
-              <ColorListEditor
-                colors={customized}
-                maxColors={MAX_BRAND_PALETTE_COLORS}
-                onChange={onChange}
-                disabled={disabled}
-              />
-              <EuiButtonEmpty
-                size="xs"
-                iconType="refresh"
-                disabled={disabled}
-                onClick={() => onChange([])}
-              >
-                {i18n.translate('charts.brandSettings.resetPalette', {
-                  defaultMessage: 'Reset to generated palette',
-                })}
-              </EuiButtonEmpty>
-            </>
-          ) : (
-            <EuiButtonEmpty
-              size="xs"
-              iconType="pencil"
-              disabled={disabled || generated.length === 0}
-              onClick={() => onChange([...generated])}
-            >
-              {i18n.translate('charts.brandSettings.customizePalette', {
-                defaultMessage: 'Customize palette',
-              })}
-            </EuiButtonEmpty>
-          )}
-        </>
-      </EuiFormRow>
-    </EuiDescribedFormGroup>
-  );
-};
 
 /**
  * Global settings section to manage the organization brand colors, palettes and logo.
@@ -168,8 +111,6 @@ export const BrandSettingsSection = ({
     () => draft.brandColors.filter((color) => hexColorRegex.test(color)),
     [draft.brandColors]
   );
-  const generated = useMemo(() => generateBrandPalettes(validBrandColors), [validBrandColors]);
-
   const update = (changes: Partial<BrandSettings>) => setDraft({ ...draft, ...changes });
 
   const onLogoChange = async (files: FileList | null) => {
@@ -199,22 +140,18 @@ export const BrandSettingsSection = ({
 
   const save = async () => {
     setIsSaving(true);
-    const toSave: BrandSettings = { ...draft, brandColors: validBrandColors };
     try {
+      const colorsChanged = JSON.stringify(validBrandColors) !== JSON.stringify(saved.brandColors);
+      const hues = colorsChanged ? await generateHues(validBrandColors) : saved.hues;
+      const toSave: BrandSettings = { ...draft, brandColors: validBrandColors, hues };
       await Promise.all([
         globalClient.set(BRAND_PALETTE_SETTING, toSave.brandColors),
-        globalClient.set(BRAND_CATEGORICAL_PALETTE_SETTING, toSave.categorical),
-        globalClient.set(BRAND_LINE_OPTIMIZED_PALETTE_SETTING, toSave.lineOptimized),
+        globalClient.set(BRAND_HUES_SETTING, JSON.stringify(toSave.hues)),
         globalClient.set(BRAND_LOGO_SETTING, toSave.logo),
       ]);
       setSaved(toSave);
       setDraft(toSave);
-      toasts.addSuccess(
-        i18n.translate('charts.brandSettings.saved', {
-          defaultMessage:
-            'Brand settings saved. Charts use the new palettes as soon as they redraw.',
-        })
-      );
+      toasts.addSuccess(savedMessage(saved.hues.length > 0, hues.length > 0, colorsChanged));
     } catch (error) {
       toasts.addError(error, {
         title: i18n.translate('charts.brandSettings.saveError', {
@@ -242,7 +179,7 @@ export const BrandSettingsSection = ({
         <p>
           {i18n.translate('charts.brandSettings.description', {
             defaultMessage:
-              'Use your brand colors and logo across Kibana. The brand palettes replace the default Elastic palettes in all charts, except charts that already use another palette.',
+              'Use your brand colors and logo across Kibana. The brand palettes are added next to the Elastic palettes, which stay the default.',
           })}
         </p>
       </EuiText>
@@ -318,7 +255,7 @@ export const BrandSettingsSection = ({
         }
         description={i18n.translate('charts.brandSettings.brandColorsDescription', {
           defaultMessage:
-            'Your main brand colors, in order of importance. The palettes below are generated from them. Leave empty to use the Elastic palettes.',
+            'Up to six brand colors, main color first. Six brand hues are generated from them when you save, and the brand palettes are built from those hues. Leave empty for no brand palettes.',
         })}
       >
         <EuiFormRow fullWidth>
@@ -339,35 +276,29 @@ export const BrandSettingsSection = ({
         </EuiFormRow>
       </EuiDescribedFormGroup>
 
-      {validBrandColors.length > 0 && (
-        <>
-          <PaletteRow
-            title={i18n.translate('charts.brandSettings.categoricalTitle', {
-              defaultMessage: 'Chart palette',
-            })}
-            description={i18n.translate('charts.brandSettings.categoricalDescription', {
-              defaultMessage:
-                'Used by all charts except line charts. Each brand color is followed by a light tone of the same color.',
-            })}
-            generated={generated.categorical}
-            customized={draft.categorical}
-            onChange={(categorical) => update({ categorical })}
-            disabled={disabled}
-          />
-          <PaletteRow
-            title={i18n.translate('charts.brandSettings.lineOptimizedTitle', {
-              defaultMessage: 'Line chart palette',
-            })}
-            description={i18n.translate('charts.brandSettings.lineOptimizedDescription', {
-              defaultMessage:
-                'Used by line charts. All brand colors come first, then their light tones, so the first lines are easy to tell apart.',
-            })}
-            generated={generated.lineOptimized}
-            customized={draft.lineOptimized}
-            onChange={(lineOptimized) => update({ lineOptimized })}
-            disabled={disabled}
-          />
-        </>
+      {saved.hues.length > 0 && (
+        <EuiDescribedFormGroup
+          fullWidth
+          title={
+            <h4>
+              {i18n.translate('charts.brandSettings.huesTitle', {
+                defaultMessage: 'Brand hues',
+              })}
+            </h4>
+          }
+          description={i18n.translate('charts.brandSettings.huesDescription', {
+            defaultMessage:
+              'Generated from the saved brand colors. The Brand low contrast, Brand high contrast and Brand (faint) palettes use them in both light and dark mode.',
+          })}
+        >
+          <EuiFormRow fullWidth>
+            <EuiColorPaletteDisplay
+              type="fixed"
+              palette={saved.hues.map(({ base }) => base)}
+              size="m"
+            />
+          </EuiFormRow>
+        </EuiDescribedFormGroup>
       )}
 
       <EuiSpacer size="m" />

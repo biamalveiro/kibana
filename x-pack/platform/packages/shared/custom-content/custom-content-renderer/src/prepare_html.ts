@@ -106,9 +106,9 @@ export function buildThemeCss(
     ['--cc-ease', t.animation.resistance]
   );
 
-  // The default chart palette: the organization's brand palette when one is set, otherwise the
-  // Elastic palette. Short brand palettes repeat, so all ten tokens always resolve.
-  const chartPalette = getPalettes(isDark).get(KbnPalette.Default);
+  // Brand low contrast when a brand is set; otherwise the lookup falls back to the default Elastic
+  // palette. Palettes repeat, so all ten tokens always resolve.
+  const chartPalette = getPalettes(isDark).get(KbnPalette.BrandLowContrast);
   for (let index = 0; index < CHART_COLOR_TOKEN_COUNT; index++) {
     vars.push([`--cc-vis-${index}`, chartPalette.getColor(index, CHART_COLOR_TOKEN_COUNT)]);
   }

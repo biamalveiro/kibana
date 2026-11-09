@@ -28,11 +28,12 @@ export {
   oklchToHex,
   pairDifference,
 } from './src';
-export { BOREALIS_THEME, SURFACES, borealis, type Mode } from './borealis';
+export { BOREALIS_THEME, STATUS_COLORS, SURFACES, borealis, type Mode } from './borealis';
 export {
   DEFAULT_STATE,
   contrastRolesStore,
   highContrastParams,
+  type BrandHueInput,
   type ContrastRolesState,
 } from './store';
 export {
@@ -45,6 +46,7 @@ export {
   roleFor,
   themeAware,
   toMode,
+  type ColorSource,
   type TableColorUse,
   type ThemeAwarePalettes,
 } from './palettes';

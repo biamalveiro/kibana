@@ -8,12 +8,20 @@
  */
 
 import { BehaviorSubject, type Observable } from 'rxjs';
-import { DEFAULT_PARAMS, type Params } from './src';
+import { DEFAULT_PARAMS, type Hex, type Params } from './src';
+
+/** A brand hue: its name and base color, the same in both modes. */
+export interface BrandHueInput {
+  name: string;
+  base: Hex;
+}
 
 export interface ContrastRolesState {
   params: Params;
   /** High contrast's muted target, used instead of `params.lc.muted`: past base, as today's dark stacks pair /60 with /30. */
   highContrast: { muted: number };
+  /** Brand hues in place of Borealis's for the categorical palettes and tables, or undefined for Borealis. */
+  brand?: readonly BrandHueInput[];
 }
 
 export const DEFAULT_STATE: ContrastRolesState = {

@@ -12,6 +12,7 @@
   ],
   "kbn_references": [
     "@kbn/palettes",
+    "@kbn/contrast-roles",
     "@kbn/core-http-browser",
     "@kbn/core-ui-settings-browser",
     "@kbn/custom-content-common",

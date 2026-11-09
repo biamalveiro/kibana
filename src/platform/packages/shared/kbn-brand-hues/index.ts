@@ -8,6 +8,12 @@
  */
 
 export {
+  DEFAULT_PULL,
+  generateBrand,
+  type BrandOptions as BorealisBrandOptions,
+  type GeneratedBrand,
+} from './borealis';
+export {
   BAND_LC,
   BASIC_NAMES,
   FLOOR_VISIONS,

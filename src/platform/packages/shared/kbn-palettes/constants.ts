@@ -29,10 +29,6 @@ const categorical = {
    */
   Default: DEFAULT_FALLBACK_PALETTE,
   /**
-   * The Elastic palette as an option when a brand palette replaces the Default palette
-   */
-  Elastic: 'elastic' as const,
-  /**
    * Variant of Default palette optimized for line charts: dark tones first, red/yellow swapped.
    */
   ElasticLineOptimized: 'elastic_line_optimized' as const,
@@ -52,6 +48,18 @@ const categorical = {
    * Contrast roles base and muted per hue on each mode's surface.
    */
   LowContrast: 'low_contrast' as const,
+  /**
+   * Low contrast on the brand hues, listed only when a brand is set.
+   */
+  BrandLowContrast: 'brand_low_contrast' as const,
+  /**
+   * High contrast on the brand hues, listed only when a brand is set.
+   */
+  BrandHighContrast: 'brand_high_contrast' as const,
+  /**
+   * Faint on the brand hues, listed only when a brand is set.
+   */
+  BrandFaint: 'brand_faint' as const,
   /**
    * Neutral palette
    */
@@ -104,6 +112,9 @@ export const CONTRAST_ROLES_CATEGORICAL_PALETTES: readonly string[] = [
   categorical.HighContrast,
   categorical.LowContrast,
   categorical.ElasticFaint,
+  categorical.BrandLowContrast,
+  categorical.BrandHighContrast,
+  categorical.BrandFaint,
 ];
 
 /**

@@ -7,7 +7,7 @@
  * License v3.0 only", or the "Server Side Public License, v 1".
  */
 
-import { borealis, borealisStatus, SURFACES, type Mode } from './borealis';
+import { borealis, borealisStatus, brandRoles, SURFACES, type Mode } from './borealis';
 import { contrastRolesStore, highContrastParams, type ContrastRolesState } from './store';
 import {
   ROLES,
@@ -27,6 +27,12 @@ export interface ThemeAwarePalettes {
   highContrast: (n: number) => Hex[];
   /** Elastic faint: faint per hue, for fills such as table cells. */
   elasticFaint: (n: number) => Hex[];
+  /** Low contrast on the brand hues. */
+  brandLowContrast: (n: number) => Hex[];
+  /** High contrast on the brand hues. */
+  brandHighContrast: (n: number) => Hex[];
+  /** Elastic faint on the brand hues. */
+  brandFaint: (n: number) => Hex[];
   /** `cool`: blue ramp. */
   cool: (n: number) => Hex[];
   /** `warm`: red ramp. */
@@ -53,22 +59,37 @@ const repeat =
   (n: number): Hex[] =>
     Array.from({ length: n }, (_, i) => colors[i % colors.length]);
 
-interface Resolved {
-  params: Params;
+interface ResolvedHues {
+  model: ContrastRoles;
   palettes: Palettes;
   highContrast: Palettes;
-  status: Palettes;
 }
+
+interface Resolved extends ResolvedHues {
+  params: Params;
+  status: Palettes;
+  /** The brand hues, next to Borealis's, when the state has them. */
+  brand?: ResolvedHues;
+}
+
+const resolveHues = (model: ContrastRoles, surface: Hex, state: ContrastRolesState) => {
+  const { params } = state;
+  return {
+    model,
+    palettes: model.palettes(surface, params),
+    // Yellow's stack pair keeps the usual muted (src/contrast_roles.ts).
+    highContrast: model.palettes(surface, highContrastParams(state), params.lc.muted),
+  };
+};
 
 const resolve = (mode: Mode, state: ContrastRolesState): Resolved => {
   const surface = SURFACES[mode];
-  const { params } = state;
+  const { params, brand } = state;
   return {
     params,
-    palettes: borealis.palettes(surface, params),
-    // Yellow's stack pair keeps the usual muted (src/contrast_roles.ts).
-    highContrast: borealis.palettes(surface, highContrastParams(state), params.lc.muted),
+    ...resolveHues(borealis, surface, state),
     status: borealisStatus.palettes(surface, params),
+    brand: brand && resolveHues(brandRoles(brand), surface, state),
   };
 };
 
@@ -84,12 +105,18 @@ const resolved = (mode: Mode, state = contrastRolesStore.get()): Resolved => {
 
 /** Contrast roles palettes on the given mode's surface, from the store's current parameters. */
 export const themeAware = (mode: Mode): ThemeAwarePalettes => {
-  const { palettes, highContrast, status } = resolved(mode);
-  const { roles, intertwined, sequential, diverging } = palettes;
+  const { palettes, highContrast, status, brand } = resolved(mode);
+  const { sequential, diverging } = palettes;
+  const faint = ({ roles }: Palettes) => repeat(roles.map((role) => role.faint));
+  // Without brand hues, the brand palettes show Borealis's.
+  const brandHues = brand ?? { palettes, highContrast };
   return {
-    lowContrast: repeat(intertwined),
+    lowContrast: repeat(palettes.intertwined),
     highContrast: repeat(highContrast.intertwined),
-    elasticFaint: repeat(roles.map(({ faint }) => faint)),
+    elasticFaint: faint(palettes),
+    brandLowContrast: repeat(brandHues.palettes.intertwined),
+    brandHighContrast: repeat(brandHues.highContrast.intertwined),
+    brandFaint: faint(brandHues.palettes),
     cool: (n) => sequential('blue', n),
     warm: (n) => sequential('red', n),
     red: (n) => sequential('red', n),
@@ -112,11 +139,19 @@ interface HueMatch {
   model: ContrastRoles;
 }
 
+/** Where a color comes from: a categorical palette (Borealis or brand hues) or a ramp (Borealis hues only). */
+export type ColorSource = 'categorical' | 'ramp';
+
+const matchesOf = ({ model, palettes }: ResolvedHues): HueMatch[] =>
+  palettes.roles.map((role) => ({ role, model }));
+
 // The role set of a color's hue on this mode's surface: an exact role color first, then the nearest hue.
-const matchHue = (color: string, mode: Mode): HueMatch | undefined => {
-  const { palettes, status } = resolved(mode);
+const matchHue = (color: string, mode: Mode, source: ColorSource): HueMatch | undefined => {
+  const here = resolved(mode);
+  const { status, brand } = here;
   const candidates: HueMatch[] = [
-    ...palettes.roles.map((role) => ({ role, model: borealis })),
+    ...matchesOf(here),
+    ...(source === 'categorical' && brand ? matchesOf(brand) : []),
     ...status.roles.map((role) => ({ role, model: borealisStatus })),
   ];
   const hex = color.toLowerCase();
@@ -131,8 +166,11 @@ const matchHue = (color: string, mode: Mode): HueMatch | undefined => {
 };
 
 /** The contrast roles of a color's hue on the given mode's surface, or undefined for colors with no hue. */
-export const roleFor = (color: string, mode: Mode): RoleColors | undefined =>
-  matchHue(color, mode)?.role;
+export const roleFor = (
+  color: string,
+  mode: Mode,
+  source: ColorSource = 'categorical'
+): RoleColors | undefined => matchHue(color, mode, source)?.role;
 
 /** What a table colors: the cell background, or the text. */
 export type TableColorUse = 'fill' | 'text';
@@ -154,7 +192,7 @@ const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
  * base to strong for text. Colors with no hue (the diverging middle) stay as they are for fills and get no text color.
  */
 export const rampForTable = (color: string, mode: Mode, use: TableColorUse): Hex | undefined => {
-  const match = matchHue(color, mode);
+  const match = matchHue(color, mode, 'ramp');
   if (!match) return use === 'fill' ? color : undefined;
   const { params } = resolved(mode);
   const { lc, ramp } = params;
@@ -195,11 +233,11 @@ const roleTranslationFor = (mode: Mode) => {
   if (hit?.state === state) return hit.other;
   const [here, there] = [resolved(mode, state), resolved(otherModeOf(mode), state)];
   const pairs: Array<[Hex, Hex]> = [];
-  for (const key of ['palettes', 'status'] as const) {
-    here[key].roles.forEach((role, i) =>
-      ROLES.forEach((r) => pairs.push([there[key].roles[i][r], role[r]]))
-    );
-  }
+  const addPairs = (hereRoles: RoleColors[], thereRoles: RoleColors[]) =>
+    hereRoles.forEach((role, i) => ROLES.forEach((r) => pairs.push([thereRoles[i][r], role[r]])));
+  addPairs(here.palettes.roles, there.palettes.roles);
+  addPairs(here.status.roles, there.status.roles);
+  if (here.brand && there.brand) addPairs(here.brand.palettes.roles, there.brand.palettes.roles);
   const own = new Set(pairs.map(([, color]) => color.toLowerCase()));
   const other = new Map<string, Hex>();
   for (const [from, to] of pairs) {

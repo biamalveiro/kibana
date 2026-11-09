@@ -30,7 +30,6 @@ import {
   type ContrastRolesState,
   type Params,
 } from '@kbn/contrast-roles';
-
 type Group = keyof Params;
 type NumericKey<G extends Group> = {
   [K in keyof Params[G]]: Params[G][K] extends number ? K : never;
@@ -272,7 +271,15 @@ export const ContrastRolesControls = () => {
             <EuiFlexGroup justifyContent="spaceBetween" alignItems="center" responsive={false}>
               <EuiFlexItem grow={false}>{PARAMS_TITLE}</EuiFlexItem>
               <EuiFlexItem grow={false}>
-                <EuiButtonEmpty size="xs" onClick={() => contrastRolesStore.set(DEFAULT_STATE)}>
+                <EuiButtonEmpty
+                  size="xs"
+                  onClick={() =>
+                    contrastRolesStore.set({
+                      params: DEFAULT_STATE.params,
+                      highContrast: DEFAULT_STATE.highContrast,
+                    })
+                  }
+                >
                   Reset to defaults
                 </EuiButtonEmpty>
               </EuiFlexItem>

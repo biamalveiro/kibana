@@ -7,37 +7,22 @@
  * License v3.0 only", or the "Server Side Public License, v 1".
  */
 
-import { BehaviorSubject, Subscription, filter } from 'rxjs';
+import { Subscription, filter } from 'rxjs';
 import type { Plugin, CoreSetup, IUiSettingsClient } from '@kbn/core/public';
 import type { ExpressionsSetup } from '@kbn/expressions-plugin/public';
 import type { AdvancedSettingsSetup } from '@kbn/advanced-settings-plugin/public';
-import { setBrandPalettes } from '@kbn/palettes';
-import {
-  palette,
-  systemPalette,
-  resolveBrandPalettes,
-  BRAND_PALETTE_SETTING,
-  BRAND_CATEGORICAL_PALETTE_SETTING,
-  BRAND_LINE_OPTIMIZED_PALETTE_SETTING,
-} from '../common';
+import { contrastRolesStore, type BrandHueInput } from '@kbn/contrast-roles';
+import { palette, systemPalette, BRAND_HUES_SETTING } from '../common';
 
 import { ThemeService } from './services';
 import { PaletteService } from './services/palettes/service';
 import { ActiveCursor } from './services/active_cursor';
 import { registerBrandSettingsSection } from './brand_settings';
 
-const BRAND_PALETTE_SETTINGS: readonly string[] = [
-  BRAND_PALETTE_SETTING,
-  BRAND_CATEGORICAL_PALETTE_SETTING,
-  BRAND_LINE_OPTIMIZED_PALETTE_SETTING,
-];
-
-const readBrandPalettes = (globalClient: IUiSettingsClient) =>
-  resolveBrandPalettes({
-    brandColors: globalClient.get<string[]>(BRAND_PALETTE_SETTING, []),
-    categorical: globalClient.get<string[]>(BRAND_CATEGORICAL_PALETTE_SETTING, []),
-    lineOptimized: globalClient.get<string[]>(BRAND_LINE_OPTIMIZED_PALETTE_SETTING, []),
-  });
+const loadBrandHues = (globalClient: IUiSettingsClient) => {
+  const hues = globalClient.get<BrandHueInput[]>(BRAND_HUES_SETTING, []);
+  contrastRolesStore.set({ brand: hues.length > 0 ? hues : undefined });
+};
 
 interface SetupDependencies {
   expressions: ExpressionsSetup;
@@ -69,21 +54,20 @@ export class ChartsPlugin implements Plugin<ChartsPluginSetup, ChartsPluginStart
     dependencies.expressions.registerFunction(palette);
     dependencies.expressions.registerFunction(systemPalette);
     const { globalClient } = core.settings;
-    // The brand palettes are set before any palette is built, and again whenever the brand
-    // settings are saved, so charts use them without a page reload.
-    const brandPalettes$ = new BehaviorSubject(readBrandPalettes(globalClient));
-    this.subscriptions.add(brandPalettes$.subscribe(setBrandPalettes));
+    // The brand hues are loaded before any palette is built, and again whenever they are saved, so
+    // charts get the brand palettes without a page reload.
+    loadBrandHues(globalClient);
     this.subscriptions.add(
       globalClient
         .getUpdate$()
-        .pipe(filter(({ key }) => BRAND_PALETTE_SETTINGS.includes(key)))
-        .subscribe(() => brandPalettes$.next(readBrandPalettes(globalClient)))
+        .pipe(filter(({ key }) => key === BRAND_HUES_SETTING))
+        .subscribe(() => loadBrandHues(globalClient))
     );
     if (dependencies.advancedSettings) {
       registerBrandSettingsSection(dependencies.advancedSettings, globalClient);
     }
     this.themeService.init(core.theme);
-    this.palettes = this.paletteService.setup(core.theme.theme$, brandPalettes$);
+    this.palettes = this.paletteService.setup(core.theme.theme$);
     this.activeCursor.setup();
 
     return {

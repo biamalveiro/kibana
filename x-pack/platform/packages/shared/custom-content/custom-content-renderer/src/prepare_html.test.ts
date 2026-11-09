@@ -7,7 +7,8 @@
 
 import DOMPurify from 'dompurify';
 import { euiPaletteColorBlind, type EuiThemeComputed } from '@elastic/eui';
-import { setBrandPalettes } from '@kbn/palettes';
+import { contrastRolesStore } from '@kbn/contrast-roles';
+import { getPalettes, KbnPalette } from '@kbn/palettes';
 import { applyHtmlTheme, injectCsp, injectStyleTag, sanitizeHtml } from './prepare_html';
 import * as internalLink from './internal_link';
 
@@ -148,7 +149,7 @@ describe('applyHtmlTheme', () => {
   });
 
   describe('chart color tokens', () => {
-    afterEach(() => setBrandPalettes(undefined));
+    afterEach(() => contrastRolesStore.set({ brand: undefined }));
 
     it('uses the Elastic palette when there is no brand palette', () => {
       const result = applyHtmlTheme('<p>hi</p>', 'LIGHT', euiTheme);
@@ -158,18 +159,21 @@ describe('applyHtmlTheme', () => {
       });
     });
 
-    it('uses the brand palette and repeats it to fill all ten tokens', () => {
-      setBrandPalettes({
-        categorical: ['#07B9CE', '#9CF2FC', '#3969E7', '#ABBFF5'],
-        lineOptimized: ['#07B9CE', '#3969E7', '#9CF2FC', '#ABBFF5'],
+    it('uses the brand low contrast palette when a brand is set', () => {
+      contrastRolesStore.set({
+        brand: [
+          { name: 'Teal', base: '#07B9CE' },
+          { name: 'Blue', base: '#3969E7' },
+        ],
       });
 
       const result = applyHtmlTheme('<p>hi</p>', 'LIGHT', euiTheme);
+      const brandColors = getPalettes(false).get(KbnPalette.BrandLowContrast).colors(10);
 
-      expect(result).toContain('--cc-vis-0:#07B9CE');
-      expect(result).toContain('--cc-vis-3:#ABBFF5');
-      expect(result).toContain('--cc-vis-4:#07B9CE');
-      expect(result).toContain('--cc-vis-9:#9CF2FC');
+      brandColors.forEach((color, index) => {
+        expect(result).toContain(`--cc-vis-${index}:${color}`);
+      });
+      expect(result).not.toContain(`--cc-vis-0:${euiPaletteColorBlind()[0]}`);
     });
   });
 

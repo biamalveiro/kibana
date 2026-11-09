@@ -11,13 +11,12 @@ import { i18n } from '@kbn/i18n';
 import { schema } from '@kbn/config-schema';
 import type { UiSettingsParams } from '@kbn/core/server';
 import {
-  BRAND_CATEGORICAL_PALETTE_SETTING,
-  BRAND_LINE_OPTIMIZED_PALETTE_SETTING,
+  BRAND_HUES_SETTING,
   BRAND_LOGO_SETTING,
   BRAND_PALETTE_SETTING,
   MAX_BRAND_COLORS,
+  MAX_BRAND_HUES,
   MAX_BRAND_LOGO_SIZE_IN_KB,
-  MAX_BRAND_PALETTE_COLORS,
 } from '../common';
 
 const BRAND_CATEGORY = 'brand';
@@ -42,6 +41,26 @@ const hiddenFromAdvancedSettings = { readonly: true, readonlyMode: 'ui' } as con
 const brandColorsSchema = (maxSize: number) =>
   schema.arrayOf(schema.string({ maxLength: 7, validate: validateBrandColor }), { maxSize });
 
+const brandHuesSchema = schema.arrayOf(
+  schema.object({
+    name: schema.string({ maxLength: 40 }),
+    base: schema.string({ maxLength: 7, validate: validateBrandColor }),
+  }),
+  { maxSize: MAX_BRAND_HUES }
+);
+
+// JSON settings are stored as strings, so parse before checking the hues.
+const validateBrandHues = (value: string) => {
+  try {
+    brandHuesSchema.validate(JSON.parse(value));
+  } catch (error) {
+    return i18n.translate('charts.uiSettings.brandHues.invalid', {
+      defaultMessage: 'Brand hues must be a list of names and hex colors: {message}',
+      values: { message: error.message },
+    });
+  }
+};
+
 const validateBrandLogo = (logo: string) => {
   if (!svgDataUrlRegex.test(logo)) {
     return i18n.translate('charts.uiSettings.brandLogo.invalidFile', {
@@ -57,7 +76,7 @@ export const getUiSettings = (): Record<string, UiSettingsParams> => ({
     }),
     description: i18n.translate('charts.uiSettings.brandPalette.description', {
       defaultMessage:
-        'Hex colors, separated by commas, used to generate the brand palettes that replace the default Elastic palettes in all charts. Charts that already use another palette keep it. Leave empty to use the Elastic palettes.',
+        'Hex colors, separated by commas, main color first, that the brand hues are generated from. Leave empty for no brand palettes.',
     }),
     value: [],
     type: 'array',
@@ -66,35 +85,20 @@ export const getUiSettings = (): Record<string, UiSettingsParams> => ({
     category: [BRAND_CATEGORY],
     schema: brandColorsSchema(MAX_BRAND_COLORS),
   },
-  [BRAND_CATEGORICAL_PALETTE_SETTING]: {
-    name: i18n.translate('charts.uiSettings.brandCategoricalPalette.name', {
-      defaultMessage: 'Brand palette',
+  [BRAND_HUES_SETTING]: {
+    name: i18n.translate('charts.uiSettings.brandHues.name', {
+      defaultMessage: 'Brand hues',
     }),
-    description: i18n.translate('charts.uiSettings.brandCategoricalPalette.description', {
+    description: i18n.translate('charts.uiSettings.brandHues.description', {
       defaultMessage:
-        'Hex colors of the brand palette used by all charts except line charts. Leave empty to generate it from the brand colors, pairing each color with a light tone.',
+        'The hues generated from the brand colors, as names and base hex colors. The brand palettes are built from them, next to the Elastic palettes.',
     }),
-    value: [],
-    type: 'array',
+    value: '[]',
+    type: 'json',
     order: 2,
     ...hiddenFromAdvancedSettings,
     category: [BRAND_CATEGORY],
-    schema: brandColorsSchema(MAX_BRAND_PALETTE_COLORS),
-  },
-  [BRAND_LINE_OPTIMIZED_PALETTE_SETTING]: {
-    name: i18n.translate('charts.uiSettings.brandLineOptimizedPalette.name', {
-      defaultMessage: 'Brand palette (line optimized)',
-    }),
-    description: i18n.translate('charts.uiSettings.brandLineOptimizedPalette.description', {
-      defaultMessage:
-        'Hex colors of the brand palette used by line charts. Leave empty to generate it from the brand colors, with all brand colors before their light tones.',
-    }),
-    value: [],
-    type: 'array',
-    order: 3,
-    ...hiddenFromAdvancedSettings,
-    category: [BRAND_CATEGORY],
-    schema: brandColorsSchema(MAX_BRAND_PALETTE_COLORS),
+    schema: schema.string({ maxLength: 1024, validate: validateBrandHues }),
   },
   [BRAND_LOGO_SETTING]: {
     name: i18n.translate('charts.uiSettings.brandLogo.name', {
@@ -107,7 +111,7 @@ export const getUiSettings = (): Record<string, UiSettingsParams> => ({
     }),
     value: null,
     type: 'image',
-    order: 4,
+    order: 3,
     requiresPageReload: true,
     ...hiddenFromAdvancedSettings,
     category: [BRAND_CATEGORY],

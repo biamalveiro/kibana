@@ -9,13 +9,12 @@
 
 import { contrastRolesStore, type ContrastRolesState } from '@kbn/contrast-roles';
 import { KbnPalettes } from '../classes/palettes';
-import type { IKbnPalette } from '../classes/types';
-import type { BrandPalettes } from './brand';
-import { createBrandPalettes, getBrandPalettes } from './brand';
 import {
-  elasticOptionPalette,
   elasticPalette,
   elasticLineOptimizedPalette,
+  getBrandFaintPalette,
+  getBrandHighContrastPalette,
+  getBrandLowContrastPalette,
   getElasticFaintPalette,
   getHighContrastPalette,
   getLowContrastPalette,
@@ -43,21 +42,22 @@ import {
 } from './gradient';
 export { logLevelPalette } from './semantic';
 
-const buildKbnPalettes = (
-  darkMode: boolean,
-  defaultPalette: IKbnPalette,
-  lineOptimizedPalette: IKbnPalette,
-  additionalPalettes: IKbnPalette[] = []
-) =>
+const buildKbnPalettes = (darkMode: boolean, hasBrand: boolean) =>
   new KbnPalettes(
     [
-      defaultPalette,
-      lineOptimizedPalette,
-      ...additionalPalettes,
+      elasticPalette,
+      elasticLineOptimizedPalette,
       revisedPalette,
       getHighContrastPalette(darkMode),
       getLowContrastPalette(darkMode),
       getElasticFaintPalette(darkMode),
+      ...(hasBrand
+        ? [
+            getBrandLowContrastPalette(darkMode),
+            getBrandHighContrastPalette(darkMode),
+            getBrandFaintPalette(darkMode),
+          ]
+        : []),
       severityPalette,
       kibana7Palette,
       kibana4Palette,
@@ -79,46 +79,25 @@ const buildKbnPalettes = (
       elasticClassicPalette,
       compareToPalette,
     ],
-    defaultPalette
+    elasticPalette
   );
 
-const buildRegistries = (brandPalettes: BrandPalettes | undefined) => {
-  if (!brandPalettes) {
-    return {
-      light: buildKbnPalettes(false, elasticPalette, elasticLineOptimizedPalette),
-      dark: buildKbnPalettes(true, elasticPalette, elasticLineOptimizedPalette),
-    };
-  }
-  const { brandPalette, brandLineOptimizedPalette } = createBrandPalettes(brandPalettes, {
-    defaultPalette: elasticPalette,
-    lineOptimizedPalette: elasticLineOptimizedPalette,
-  });
-  // The Elastic palette stays available as an option next to the brand palettes.
-  return {
-    light: buildKbnPalettes(false, brandPalette, brandLineOptimizedPalette, [elasticOptionPalette]),
-    dark: buildKbnPalettes(true, brandPalette, brandLineOptimizedPalette, [elasticOptionPalette]),
-  };
-};
-
-// A new registry per contrast roles state and brand palettes, so consumers memoized on it recompute when either
-// changes; the contrast roles palettes inside read the state when called.
-let cached:
-  | { state: ContrastRolesState; brandKey: string; light: KbnPalettes; dark: KbnPalettes }
-  | undefined;
+// A new registry per contrast roles state, so consumers memoized on it recompute when its parameters or brand hues
+// change; the palettes inside read the state when called. The brand palettes are listed only while a brand is set.
+let cached: { state: ContrastRolesState; light: KbnPalettes; dark: KbnPalettes } | undefined;
 
 export const getPalettes = (darkMode: boolean): KbnPalettes => {
   const state = contrastRolesStore.get();
-  const brandPalettes = getBrandPalettes();
-  const brandKey = brandPalettes
-    ? `${brandPalettes.categorical.join(',')}:${brandPalettes.lineOptimized.join(',')}`
-    : '';
-  if (cached?.state !== state || cached.brandKey !== brandKey) {
-    cached = { state, brandKey, ...buildRegistries(brandPalettes) };
+  if (cached?.state !== state) {
+    const hasBrand = Boolean(state.brand);
+    cached = {
+      state,
+      light: buildKbnPalettes(false, hasBrand),
+      dark: buildKbnPalettes(true, hasBrand),
+    };
   }
   return darkMode ? cached.dark : cached.light;
 };
 
-export type { BrandPalettes } from './brand';
-export { generateBrandPalettes, getBrandPalettes, getLightTone, setBrandPalettes } from './brand';
 export { elasticPalette, elasticLineOptimizedPalette } from './categorical';
 export * from './get_kbn_palettes';

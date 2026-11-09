@@ -114,7 +114,7 @@ export const getContrastRolesBadgeColors = (
   coloring: ContrastRolesColoring,
   isDarkMode: boolean
 ): { fill: string; text: string } | undefined => {
-  const role = roleFor(color, toMode(isDarkMode));
+  const role = roleFor(color, toMode(isDarkMode), coloring);
   if (!role) return undefined;
   const fill =
     coloring === 'ramp' ? rampForTable(color, toMode(isDarkMode), 'fill') ?? color : role.faint;

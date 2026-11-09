@@ -10,7 +10,8 @@
 // Borealis: the input contrast roles are built for here, read from the same @elastic/eui-theme-borealis Kibana ships.
 import { colorVisLight } from '@elastic/eui-theme-borealis';
 import { euiDarkVars, euiLightVars } from '@kbn/ui-theme';
-import { createContrastRoles, hexToOklch, type Hex, type Theme } from './src';
+import { createContrastRoles, hexToOklch, type ContrastRoles, type Hex, type Theme } from './src';
+import type { BrandHueInput } from './store';
 
 export type Mode = 'light' | 'dark';
 
@@ -45,6 +46,27 @@ export const BOREALIS_THEME: Theme = {
 };
 
 export const borealis = createContrastRoles(BOREALIS_THEME);
+
+// Success and danger per mode: generated brand hues keep away from them, as in the workbench.
+export const STATUS_COLORS: readonly Hex[] = [euiLightVars, euiDarkVars].flatMap((vars) => [
+  vars.euiColorSuccess,
+  vars.euiColorDanger,
+]);
+
+const brandModels = new WeakMap<readonly BrandHueInput[], ContrastRoles>();
+
+/** The contrast roles of brand hues on Borealis's surfaces, built once per set of hues. */
+export const brandRoles = (hues: readonly BrandHueInput[]): ContrastRoles => {
+  const hit = brandModels.get(hues);
+  if (hit) return hit;
+  const model = createContrastRoles({
+    surfaces: SURFACES,
+    hues: hues.map(({ name, base }) => ({ name, base })),
+    neutralTint: VIS_BASE0,
+  });
+  brandModels.set(hues, model);
+  return model;
+};
 
 // EUI's status palette stops, in order. Only their hue angles are used: the tokens' lightness varies (warning1 is a
 // pale yellow), so their bases are modelled.
