@@ -8,7 +8,12 @@
  */
 
 import { borealis, borealisStatus, brandRoles, SURFACES, type Mode } from './borealis';
-import { contrastRolesStore, highContrastParams, type ContrastRolesState } from './store';
+import {
+  contrastRolesStore,
+  highContrastParams,
+  type BrandHueInput,
+  type ContrastRolesState,
+} from './store';
 import {
   ROLES,
   apcaLc,
@@ -123,6 +128,27 @@ export const themeAware = (mode: Mode): ThemeAwarePalettes => {
     temperature: (n) => diverging('blue', 'red', n),
     positive: (n) => status.sequential('success', n),
     complementary: (n) => diverging('blue', 'yellow', n),
+  };
+};
+
+/** The brand palettes' distinct colors for these hues on the given mode's surface, before they repeat. */
+export interface BrandPreview {
+  lowContrast: Hex[];
+  highContrast: Hex[];
+  faint: Hex[];
+}
+
+/** The brand palettes that these hues would give, for previewing hues that are not saved yet. */
+export const brandPreview = (
+  hues: readonly BrandHueInput[],
+  mode: Mode,
+  state = contrastRolesStore.get()
+): BrandPreview => {
+  const { palettes, highContrast } = resolveHues(brandRoles(hues), SURFACES[mode], state);
+  return {
+    lowContrast: palettes.intertwined,
+    highContrast: highContrast.intertwined,
+    faint: palettes.roles.map((role) => role.faint),
   };
 };
 

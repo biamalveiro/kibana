@@ -13,11 +13,25 @@ type SystemPaletteId = KbnPaletteId | 'kibana_palette' | 'custom' | 'negative' |
 
 export const BRAND_PALETTE_SETTING = 'visualization:brandPalette';
 export const BRAND_HUES_SETTING = 'visualization:brandHues';
+export const BRAND_GENERATOR_SETTING = 'visualization:brandGenerator';
 export const BRAND_LOGO_SETTING = 'visualization:brandLogo';
 // Brand hue generation keeps at most six seeds, and makes six hues.
 export const MAX_BRAND_COLORS = 6;
 export const MAX_BRAND_HUES = 6;
 export const MAX_BRAND_LOGO_SIZE_IN_KB = 200;
+
+/** How the brand hues are generated from the brand colors. */
+export interface BrandGeneratorOptions {
+  /** Min |Lc| of each hue's base on both the light and dark surfaces. */
+  band: number;
+  /** 0 for the best fills; any other value picks at random among the near-best fills. */
+  shuffle: number;
+}
+
+// The default band must match BAND_LC in @kbn/brand-hues, which the charts plugin loads only on demand.
+export const DEFAULT_BRAND_GENERATOR: BrandGeneratorOptions = { band: 38, shuffle: 0 };
+export const BRAND_BAND_RANGE = { min: 20, max: 50 } as const;
+export const MAX_BRAND_SHUFFLE = 99999;
 
 // Currently supported palettes. This list might be extended dynamically in a later release
 export const paletteIds: SystemPaletteId[] = [

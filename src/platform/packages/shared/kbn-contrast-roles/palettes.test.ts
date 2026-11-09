@@ -17,6 +17,7 @@ import {
   type Mode,
 } from './borealis';
 import {
+  brandPreview,
   categoricalForTable,
   colorsToMode,
   isContrastRolesRamp,
@@ -182,6 +183,14 @@ describe('contrast roles on Borealis', () => {
         expect(themeAware(mode).lowContrast(4)).toEqual(elastic);
       }
     );
+
+    it('previews the brand palettes of hues that are not in the store', () => {
+      contrastRolesStore.set({ brand: undefined });
+      const preview = brandPreview(BRAND, 'dark');
+      const [orange, green] = brandRolesOn('dark');
+      expect(preview.lowContrast.slice(0, 2)).toEqual([orange.base, orange.muted]);
+      expect(preview.faint).toEqual([orange.faint, green.faint]);
+    });
 
     it('falls back to Borealis for the brand palettes when no brand is set', () => {
       contrastRolesStore.set({ brand: undefined });

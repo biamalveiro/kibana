@@ -20,10 +20,15 @@ export {
   defaultCustomColors,
   BRAND_PALETTE_SETTING,
   BRAND_HUES_SETTING,
+  BRAND_GENERATOR_SETTING,
   BRAND_LOGO_SETTING,
+  BRAND_BAND_RANGE,
+  DEFAULT_BRAND_GENERATOR,
   MAX_BRAND_COLORS,
   MAX_BRAND_HUES,
   MAX_BRAND_LOGO_SIZE_IN_KB,
+  MAX_BRAND_SHUFFLE,
+  type BrandGeneratorOptions,
 } from './constants';
 export type {
   AllowedChartOverrides,

@@ -11,12 +11,16 @@ import { i18n } from '@kbn/i18n';
 import { schema } from '@kbn/config-schema';
 import type { UiSettingsParams } from '@kbn/core/server';
 import {
+  BRAND_BAND_RANGE,
+  BRAND_GENERATOR_SETTING,
   BRAND_HUES_SETTING,
   BRAND_LOGO_SETTING,
   BRAND_PALETTE_SETTING,
+  DEFAULT_BRAND_GENERATOR,
   MAX_BRAND_COLORS,
   MAX_BRAND_HUES,
   MAX_BRAND_LOGO_SIZE_IN_KB,
+  MAX_BRAND_SHUFFLE,
 } from '../common';
 
 const BRAND_CATEGORY = 'brand';
@@ -61,6 +65,22 @@ const validateBrandHues = (value: string) => {
   }
 };
 
+const brandGeneratorSchema = schema.object({
+  band: schema.number(BRAND_BAND_RANGE),
+  shuffle: schema.number({ min: 0, max: MAX_BRAND_SHUFFLE }),
+});
+
+const validateBrandGenerator = (value: string) => {
+  try {
+    brandGeneratorSchema.validate(JSON.parse(value));
+  } catch (error) {
+    return i18n.translate('charts.uiSettings.brandGenerator.invalid', {
+      defaultMessage: 'Brand hue options must have a band and a shuffle number: {message}',
+      values: { message: error.message },
+    });
+  }
+};
+
 const validateBrandLogo = (logo: string) => {
   if (!svgDataUrlRegex.test(logo)) {
     return i18n.translate('charts.uiSettings.brandLogo.invalidFile', {
@@ -99,6 +119,20 @@ export const getUiSettings = (): Record<string, UiSettingsParams> => ({
     ...hiddenFromAdvancedSettings,
     category: [BRAND_CATEGORY],
     schema: schema.string({ maxLength: 1024, validate: validateBrandHues }),
+  },
+  [BRAND_GENERATOR_SETTING]: {
+    name: i18n.translate('charts.uiSettings.brandGenerator.name', {
+      defaultMessage: 'Brand hue options',
+    }),
+    description: i18n.translate('charts.uiSettings.brandGenerator.description', {
+      defaultMessage: 'The options the brand hues were generated with.',
+    }),
+    value: JSON.stringify(DEFAULT_BRAND_GENERATOR),
+    type: 'json',
+    order: 2,
+    ...hiddenFromAdvancedSettings,
+    category: [BRAND_CATEGORY],
+    schema: schema.string({ maxLength: 200, validate: validateBrandGenerator }),
   },
   [BRAND_LOGO_SETTING]: {
     name: i18n.translate('charts.uiSettings.brandLogo.name', {

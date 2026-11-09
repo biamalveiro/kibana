@@ -38,6 +38,7 @@ export {
 } from './store';
 export {
   CATEGORICAL_COUNTS,
+  brandPreview,
   categoricalForTable,
   colorsToMode,
   isContrastRolesRamp,
@@ -46,6 +47,7 @@ export {
   roleFor,
   themeAware,
   toMode,
+  type BrandPreview,
   type ColorSource,
   type TableColorUse,
   type ThemeAwarePalettes,
