@@ -762,6 +762,7 @@ packages:
   - 'src/platform/packages/shared/kbn-axe-config'
   - 'src/platform/packages/shared/kbn-background-search'
   - 'src/platform/packages/shared/kbn-bench'
+  - 'src/platform/packages/shared/kbn-brand-hues'
   - 'src/platform/packages/shared/kbn-cache-cli'
   - 'src/platform/packages/shared/kbn-calculate-auto'
   - 'src/platform/packages/shared/kbn-calculate-width-from-char-count'

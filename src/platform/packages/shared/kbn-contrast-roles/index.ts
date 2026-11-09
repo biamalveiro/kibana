@@ -7,8 +7,27 @@
  * License v3.0 only", or the "Server Side Public License, v 1".
  */
 
-export type { Hex, Params, Role, RoleColors } from './src';
-export { DEFAULT_PARAMS, ROLES } from './src';
+export type {
+  ContrastRoles,
+  Hex,
+  HueInput,
+  Palettes,
+  Params,
+  Role,
+  RoleColors,
+  Theme,
+} from './src';
+export {
+  DEFAULT_PARAMS,
+  ROLES,
+  apcaLc,
+  createContrastRoles,
+  hexToOklch,
+  hexToRgb255,
+  maxChroma,
+  oklchToHex,
+  pairDifference,
+} from './src';
 export { BOREALIS_THEME, SURFACES, borealis, type Mode } from './borealis';
 export {
   DEFAULT_STATE,
